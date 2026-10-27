@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2F7E46">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Tactiekbord">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Tactiekbord</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Big+Shoulders+Display:wght@800&display=swap">
+<style>
+/* Layout: het veld is het hoofdobject (links, zo hoog als het scherm toelaat); bediening in een smalle kolom rechts, op telefoon eronder */
+:root{
+  --bg:#ECF0EB; --surface:#FFFFFF; --ink:#14201A; --muted:#58675E; --line:#D3DAD4; --chip:#E1E7E2;
+  --accent:#D3402A; --accent-ink:#FFFFFF;
+  --home:#D3402A; --home-gk:#F2C230; --away:#1D4FC4; --away-gk:#1F9C68;
+  --grass-a:#2F7E46; --grass-b:#2A7340; --chalk:#F3F6F1;
+  --f-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --f-label:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1511; --surface:#17211B; --ink:#E6EDE8; --muted:#93A399; --line:#2A362F; --chip:#212C25;
+    --accent:#FF6A4F; --accent-ink:#1A0A06;
+    --grass-a:#256A3A; --grass-b:#215F34; --chalk:#E9EFE7;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1511; --surface:#17211B; --ink:#E6EDE8; --muted:#93A399; --line:#2A362F; --chip:#212C25;
+  --accent:#FF6A4F; --accent-ink:#1A0A06;
+  --grass-a:#256A3A; --grass-b:#215F34; --chalk:#E9EFE7;
+  color-scheme:dark;
+}
+body{
+  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));
+  padding-right:max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap{max-width:1120px;margin:0 auto;padding-block:18px 36px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:16px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3rem);text-transform:uppercase;letter-spacing:.01em;line-height:.85;margin:0}
+.score{display:flex;align-items:center;gap:10px;font-family:var(--f-label);font-weight:700;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.score .team{display:inline-flex;align-items:center;gap:6px}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}
+.dot.home{background:var(--home)} .dot.away{background:var(--away)}
+.score .vs{color:var(--muted);font-weight:600}
+
+.app{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
+@media (max-width:800px){.app{grid-template-columns:minmax(0,1fr)}}
+.board-col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;gap:2px}
+.seg button{font:600 .95rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:0;background:transparent;color:var(--muted);padding:9px 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .18)}
+.swatch{width:20px;height:0;border-top:3px solid;display:inline-block}
+.sw-run{border-color:#7C8A81} .sw-pass{border-color:#D9A800;border-top-style:dashed} .sw-dribble{border-color:#3BA6CF;border-top-style:dotted}
+.hint{text-align:center;color:var(--muted);font-size:.9rem;margin:0}
+
+.pitch-box{position:relative;width:min(100%, calc((100dvh - 180px) * 74 / 111));min-width:min(100%, 320px);max-width:100%;aspect-ratio:74/111;margin-inline:auto}
+.pitch-box svg{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px;background:var(--grass-b)}
+.grass-a{fill:var(--grass-a)} .grass-b{fill:var(--grass-b)}
+.lines *{fill:none;stroke:var(--chalk);stroke-width:.35}
+.lines .spot{fill:var(--chalk);stroke:none}
+.player,.ball{cursor:grab}
+.player .disc{stroke:#fff;stroke-width:.45}
+.player.home .disc{fill:var(--home)} .player.home.gk .disc{fill:var(--home-gk)}
+.player.away .disc{fill:var(--away)} .player.away.gk .disc{fill:var(--away-gk)}
+.player .num{font:700 2.7px var(--f-label);fill:#fff;text-anchor:middle;pointer-events:none}
+.player.home.gk .num{fill:#2A2205}
+.player .pname{font:600 1.9px var(--f-label);fill:#fff;text-anchor:middle;paint-order:stroke;stroke:rgb(0 0 0 / .6);stroke-width:.55;pointer-events:none}
+.player .ring{fill:none;stroke:#fff;stroke-width:.35;stroke-dasharray:.9 .6;display:none}
+.player.sel .ring{display:block}
+.player .hit{fill:transparent}
+.ball .b{fill:#fff;stroke:#1a1a1a;stroke-width:.3}
+.ball .p{fill:#1a1a1a}
+svg.drawing .player, svg.drawing .ball{pointer-events:none}
+svg.drawing{cursor:crosshair}
+.arrow{fill:none;stroke-width:.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
+.arrow.run{stroke:#FFFFFF}
+.arrow.pass{stroke:#FFD84D;stroke-dasharray:1.3 .9}
+.arrow.dribble{stroke:#9EE6FF}
+
+.editor{position:absolute;left:10px;right:10px;bottom:10px;background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;box-shadow:0 8px 28px rgb(0 0 0 / .3);display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.editor .f{display:flex;flex-direction:column;gap:4px;min-width:0}
+.editor .f.name{flex:1 1 140px}
+.editor .f.nr input{width:56px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel section{display:flex;flex-direction:column;gap:10px}
+h2{font:700 .8rem/1 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
+label.lbl{font:600 .78rem/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;align-items:center;gap:10px}
+.row .grow{flex:1;min-width:0}
+select,input[type="text"]{font:500 1rem var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+.btn{font:600 .95rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{background:var(--chip)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.05);background:var(--accent)}
+.btn.danger{color:var(--accent)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btns .wide{grid-column:1/-1}
+.check{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer}
+.check input{width:18px;height:18px;accent-color:var(--away)}
+.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.list li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
+.list li:first-child{border-top:0}
+.list .meta{flex:1;min-width:0}
+.list .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .dt{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.list .btn{padding:7px 9px;font-size:.85rem}
+.empty{color:var(--muted);font-size:.9rem;margin:0}
+.toast{font-size:.85rem;color:var(--muted);min-height:1.1em;margin:0}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>Tactiekbord</h1>
+    <div class="score" aria-live="polite">
+      <span class="team"><span class="dot home"></span><span id="scoreHome">Wij 4-3-3</span></span>
+      <span class="vs" id="scoreVs">vs</span>
+      <span class="team" id="scoreAwayWrap"><span class="dot away"></span><span id="scoreAway">Tegenstander 4-4-2</span></span>
+    </div>
+  </header>
+
+  <div class="app">
+    <div class="board-col">
+      <div class="toolbar">
+        <div class="seg" role="group" aria-label="Modus">
+          <button type="button" id="modeMove" aria-pressed="true">Verplaatsen</button>
+          <button type="button" id="modeDraw" aria-pressed="false">Tekenen</button>
+        </div>
+        <div class="seg" role="group" aria-label="Soort pijl" id="arrowTypes" hidden>
+          <button type="button" data-type="run" aria-pressed="true"><span class="swatch sw-run"></span>Loopactie</button>
+          <button type="button" data-type="pass" aria-pressed="false"><span class="swatch sw-pass"></span>Pass</button>
+          <button type="button" data-type="dribble" aria-pressed="false"><span class="swatch sw-dribble"></span>Dribbel</button>
+        </div>
+      </div>
+      <p class="hint" id="hint">Sleep spelers en de bal. Tik op een speler om een naam te geven.</p>
+
+      <div class="pitch-box">
+        <svg id="pitch" viewBox="-3 -3 74 111" aria-label="Voetbalveld">
+          <defs>
+            <marker id="ah-run" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFFFFF"/></marker>
+            <marker id="ah-pass" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFD84D"/></marker>
+            <marker id="ah-dribble" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9EE6FF"/></marker>
+          </defs>
+          <g id="grass"></g>
+          <g class="lines">
+            <rect x="0" y="0" width="68" height="105"/>
+            <line x1="0" y1="52.5" x2="68" y2="52.5"/>
+            <circle cx="34" cy="52.5" r="9.15"/>
+            <circle class="spot" cx="34" cy="52.5" r=".45"/>
+            <rect x="13.84" y="0" width="40.32" height="16.5"/>
+            <rect x="24.84" y="0" width="18.32" height="5.5"/>
+            <circle class="spot" cx="34" cy="11" r=".45"/>
+            <path d="M26.69 16.5 A9.15 9.15 0 0 0 41.31 16.5"/>
+            <rect x="13.84" y="88.5" width="40.32" height="16.5"/>
+            <rect x="24.84" y="99.5" width="18.32" height="5.5"/>
+            <circle class="spot" cx="34" cy="94" r=".45"/>
+            <path d="M26.69 88.5 A9.15 9.15 0 0 1 41.31 88.5"/>
+            <path d="M1 0 A1 1 0 0 1 0 1"/>
+            <path d="M67 0 A1 1 0 0 0 68 1"/>
+            <path d="M0 104 A1 1 0 0 1 1 105"/>
+            <path d="M68 104 A1 1 0 0 0 67 105"/>
+            <rect x="30.34" y="-2" width="7.32" height="2"/>
+            <rect x="30.34" y="105" width="7.32" height="2"/>
+          </g>
+          <g id="arrows"></g>
+          <g id="players"></g>
+        </svg>
+
+        <div class="editor" id="editor" hidden>
+          <div class="f nr"><label class="lbl" for="edNum">Nummer</label><input type="text" id="edNum" inputmode="numeric" maxlength="2"></div>
+          <div class="f name"><label class="lbl" for="edName">Naam</label><input type="text" id="edName" maxlength="14" placeholder="Bijv. Daan"></div>
+          <button type="button" class="btn primary" id="edClose">Klaar</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="panel">
+      <section>
+        <h2>Teamgrootte</h2>
+        <div class="seg" role="group" aria-label="Teamgrootte" style="align-self:flex-start">
+          <button type="button" data-size="11" aria-pressed="true">11-tal</button>
+          <button type="button" data-size="8" aria-pressed="false">8-tal</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Opstelling</h2>
+        <div class="row"><span class="dot home"></span><label class="lbl" for="homeForm" style="width:92px">Wij</label><select id="homeForm" class="grow"></select></div>
+        <div class="row"><span class="dot away"></span><label class="lbl" for="awayForm" style="width:92px">Tegenstander</label><select id="awayForm" class="grow"></select></div>
+        <label class="check"><input type="checkbox" id="showAway" checked> Tegenstander tonen</label>
+      </section>
+
+      <section>
+        <h2>Bord</h2>
+        <div class="btns">
+          <button type="button" class="btn" id="undo">Laatste pijl weg</button>
+          <button type="button" class="btn" id="clearArrows">Pijlen wissen</button>
+          <button type="button" class="btn wide" id="resetPos">Spelers terug naar opstelling</button>
+        </div>
+      </section>
+
+      <section>
+        <h2>Situaties</h2>
+        <div class="row">
+          <input type="text" id="sitName" class="grow" maxlength="40" placeholder="Bijv. Opbouw van achteruit" aria-label="Naam van de situatie">
+          <button type="button" class="btn primary" id="sitSave">Opslaan</button>
+        </div>
+        <p class="toast" id="toast"></p>
+        <ul class="list" id="sitList"></ul>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+const SVGNS = 'http://www.w3.org/2000/svg';
+// [x, y, rugnummer] voor ons team (speelt naar boven). Tegenstander wordt gespiegeld.
+const FORMATIONS = {
+  11: {
+    '4-3-3':   [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[18,73,10],[34,76,6],[50,73,8],[12,60,11],[34,58,9],[56,60,7]],
+    '4-4-2':   [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[9,72,11],[26,74,6],[42,74,8],[59,72,7],[27,60,10],[41,59,9]],
+    '4-2-3-1': [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[27,78,6],[41,78,8],[12,67,11],[34,67,10],[56,67,7],[34,58,9]],
+    '3-5-2':   [[34,100,1],[18,88,4],[34,89,3],[50,88,2],[7,74,5],[22,76,6],[34,72,10],[46,76,8],[61,74,7],[27,60,11],[41,59,9]],
+    '3-4-3':   [[34,100,1],[18,88,4],[34,89,3],[50,88,2],[9,74,5],[27,76,6],[41,76,8],[59,74,7],[13,61,11],[34,58,9],[55,61,10]]
+  },
+  8: {
+    '3-3-1': [[34,100,1],[14,87,5],[34,88,3],[54,87,2],[14,74,10],[34,75,6],[54,74,8],[34,61,9]],
+    '2-3-2': [[34,100,1],[22,88,4],[46,88,3],[12,75,11],[34,76,6],[56,75,7],[25,62,10],[43,62,9]],
+    '3-2-2': [[34,100,1],[14,87,5],[34,88,3],[54,87,2],[25,76,6],[43,76,8],[22,62,11],[46,62,7]]
+  }
+};
+const KEY = 'tactiekbord.v1', SKEY = 'tactiekbord.situaties.v1';
+const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+const read = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function makeTeam(team, size, form) {
+  return FORMATIONS[size][form].map(([x, y, n], i) => ({
+    id: team + i, team, num: String(n), name: '', gk: i === 0,
+    x: team === 'home' ? x : 68 - x, y: team === 'home' ? y : 105 - y
+  }));
+}
+function defaultState() {
+  return {
+    size: 11, homeForm: '4-3-3', awayForm: '4-4-2', showAway: true,
+    players: makeTeam('home', 11, '4-3-3').concat(makeTeam('away', 11, '4-4-2')),
+    ball: { x: 34, y: 66 },
+    arrows: [
+      { type: 'pass', x1: 34, y1: 74, x2: 53, y2: 61.5 },
+      { type: 'run', x1: 57.5, y1: 57.5, x2: 60, y2: 38 },
+      { type: 'dribble', x1: 12, y1: 57.5, x2: 19, y2: 42 }
+    ]
+  };
+}
+function valid(s) {
+  return s && FORMATIONS[s.size] && FORMATIONS[s.size][s.homeForm] && FORMATIONS[s.size][s.awayForm] &&
+    Array.isArray(s.players) && Array.isArray(s.arrows) && s.ball;
+}
+
+let state = read(KEY); if (!valid(state)) state = defaultState();
+let situations = read(SKEY); if (!Array.isArray(situations)) situations = [];
+let mode = 'move', arrowType = 'run', selected = null, action = null;
+
+const $ = id => document.getElementById(id);
+const svg = $('pitch'), playersG = $('players'), arrowsG = $('arrows');
+const save = () => store(KEY, state);
+
+// gras-banen
+(function () {
+  const g = $('grass');
+  for (let i = 0; i < 12; i++) {
+    const r = document.createElementNS(SVGNS, 'rect');
+    r.setAttribute('x', -3); r.setAttribute('width', 74);
+    r.setAttribute('y', -3 + i * 9.25); r.setAttribute('height', 9.26);
+    r.setAttribute('class', i % 2 ? 'grass-b' : 'grass-a');
+    g.appendChild(r);
+  }
+})();
+
+function el(tag, attrs, text) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  if (text != null) n.textContent = text;
+  return n;
+}
+
+function arrowPath(a) {
+  const dx = a.x2 - a.x1, dy = a.y2 - a.y1, L = Math.hypot(dx, dy);
+  if (a.type !== 'dribble' || L < 3) return `M${a.x1} ${a.y1} L${a.x2} ${a.y2}`;
+  const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
+  const tail = Math.min(2.5, L * 0.3), wl = L - tail;
+  const waves = Math.max(1, Math.round(wl / 3));
+  let d = `M${a.x1} ${a.y1}`;
+  for (let s = 0.4; s <= wl; s += 0.4) {
+    const off = 0.8 * Math.sin(2 * Math.PI * waves * s / wl);
+    d += ` L${(a.x1 + ux * s + nx * off).toFixed(2)} ${(a.y1 + uy * s + ny * off).toFixed(2)}`;
+  }
+  return d + ` L${a.x2} ${a.y2}`;
+}
+
+function renderArrows() {
+  arrowsG.textContent = '';
+  state.arrows.forEach(a => arrowsG.appendChild(el('path', { class: 'arrow ' + a.type, d: arrowPath(a), 'marker-end': `url(#ah-${a.type})` })));
+}
+
+function renderPlayers() {
+  playersG.textContent = '';
+  state.players.forEach(p => {
+    if (p.team === 'away' && !state.showAway) return;
+    const g = el('g', { class: `player ${p.team}${p.gk ? ' gk' : ''}${selected === p.id ? ' sel' : ''}`, 'data-id': p.id, transform: `translate(${p.x} ${p.y})` });
+    g.appendChild(el('circle', { class: 'hit', r: 3.6 }));
+    g.appendChild(el('circle', { class: 'ring', r: 3.5 }));
+    g.appendChild(el('circle', { class: 'disc', r: 2.6 }));
+    g.appendChild(el('text', { class: 'num', y: 0.95 }, p.num));
+    if (p.name) g.appendChild(el('text', { class: 'pname', y: 4.9 }, p.name));
+    playersG.appendChild(g);
+  });
+  const b = el('g', { class: 'ball', 'data-id': 'ball', transform: `translate(${state.ball.x} ${state.ball.y})` });
+  b.appendChild(el('circle', { r: 2.4, fill: 'transparent' }));
+  b.appendChild(el('circle', { class: 'b', r: 1.15 }));
+  b.appendChild(el('circle', { class: 'p', r: 0.42 }));
+  playersG.appendChild(b);
+}
+
+function fillSelect(sel, size, value) {
+  sel.textContent = '';
+  Object.keys(FORMATIONS[size]).forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
+  sel.value = value;
+}
+
+function renderControls() {
+  $('modeMove').setAttribute('aria-pressed', mode === 'move');
+  $('modeDraw').setAttribute('aria-pressed', mode === 'draw');
+  $('arrowTypes').hidden = mode !== 'draw';
+  document.querySelectorAll('#arrowTypes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.type === arrowType));
+  document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.size === state.size));
+  svg.classList.toggle('drawing', mode === 'draw');
+  $('hint').textContent = mode === 'draw'
+    ? 'Sleep over het veld om een pijl te tekenen.'
+    : 'Sleep spelers en de bal. Tik op een speler om een naam te geven.';
+  fillSelect($('homeForm'), state.size, state.homeForm);
+  fillSelect($('awayForm'), state.size, state.awayForm);
+  $('showAway').checked = state.showAway;
+  $('scoreHome').textContent = 'Wij ' + state.homeForm;
+  $('scoreAway').textContent = 'Tegenstander ' + state.awayForm;
+  $('scoreAwayWrap').hidden = $('scoreVs').hidden = !state.showAway;
+}
+
+function render() { renderArrows(); renderPlayers(); renderControls(); }
+
+// ---- slepen en tekenen ----
+function toSvg(e) {
+  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+svg.addEventListener('pointerdown', e => {
+  if (e.button > 0) return;
+  const p = toSvg(e);
+  if (mode === 'draw') {
+    const path = el('path', { class: 'arrow ' + arrowType, 'marker-end': `url(#ah-${arrowType})` });
+    arrowsG.appendChild(path);
+    action = { kind: 'draw', type: arrowType, x1: p.x, y1: p.y, x2: p.x, y2: p.y, path };
+    svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
+  }
+  const t = e.target.closest('[data-id]');
+  if (!t) { if (selected) select(null); return; }
+  const id = t.dataset.id;
+  const obj = id === 'ball' ? state.ball : state.players.find(q => q.id === id);
+  if (!obj) return;
+  action = { kind: 'drag', id, obj, node: t, dx: p.x - obj.x, dy: p.y - obj.y, sx: p.x, sy: p.y, moved: false };
+  if (id !== 'ball') { const ball = playersG.querySelector('[data-id="ball"]'); playersG.insertBefore(t, ball); }
+  svg.setPointerCapture(e.pointerId); e.preventDefault();
+});
+
+svg.addEventListener('pointermove', e => {
+  if (!action) return;
+  const p = toSvg(e);
+  if (action.kind === 'draw') {
+    action.x2 = +clamp(p.x, -2, 70).toFixed(2); action.y2 = +clamp(p.y, -2, 107).toFixed(2);
+    action.path.setAttribute('d', arrowPath(action));
+    return;
+  }
+  if (Math.hypot(p.x - action.sx, p.y - action.sy) > 0.8) action.moved = true;
+  const nx = +clamp(p.x - action.dx, -1.5, 69.5).toFixed(2), ny = +clamp(p.y - action.dy, -1.5, 106.5).toFixed(2);
+  action.obj.x = nx; action.obj.y = ny;
+  action.node.setAttribute('transform', `translate(${nx} ${ny})`);
+});
+
+function endAction() {
+  if (!action) return;
+  const a = action; action = null;
+  if (a.kind === 'draw') {
+    if (Math.hypot(a.x2 - a.x1, a.y2 - a.y1) > 2.5) {
+      state.arrows.push({ type: a.type, x1: +a.x1.toFixed(2), y1: +a.y1.toFixed(2), x2: a.x2, y2: a.y2 });
+      save();
+    }
+    renderArrows();
+    return;
+  }
+  if (!a.moved && a.id !== 'ball') select(a.id);
+  else save();
+}
+svg.addEventListener('pointerup', endAction);
+svg.addEventListener('pointercancel', endAction);
+
+// ---- speler bewerken ----
+function select(id) {
+  selected = id;
+  const p = state.players.find(q => q.id === id);
+  $('editor').hidden = !p;
+  if (p) { $('edNum').value = p.num; $('edName').value = p.name; }
+  renderPlayers();
+}
+$('edNum').addEventListener('input', e => { const p = state.players.find(q => q.id === selected); if (p) { p.num = e.target.value.replace(/\D/g, '').slice(0, 2); e.target.value = p.num; renderPlayers(); save(); } });
+$('edName').addEventListener('input', e => { const p = state.players.find(q => q.id === selected); if (p) { p.name = e.target.value; renderPlayers(); save(); } });
+$('edName').addEventListener('keydown', e => { if (e.key === 'Enter') select(null); });
+$('edClose').addEventListener('click', () => select(null));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && selected) select(null); });
+
+// ---- bediening ----
+$('modeMove').addEventListener('click', () => { mode = 'move'; renderControls(); });
+$('modeDraw').addEventListener('click', () => { mode = 'draw'; if (selected) select(null); renderControls(); });
+document.querySelectorAll('#arrowTypes button').forEach(b => b.addEventListener('click', () => { arrowType = b.dataset.type; renderControls(); }));
+
+function setFormation(team, form) {
+  state[team + 'Form'] = form;
+  const old = state.players.filter(p => p.team === team);
+  const fresh = makeTeam(team, state.size, form);
+  fresh.forEach((p, i) => { if (old[i]) p.name = old[i].name; });
+  const others = state.players.filter(p => p.team !== team);
+  state.players = team === 'home' ? fresh.concat(others) : others.concat(fresh);
+  selected = null; $('editor').hidden = true;
+  save(); render();
+}
+$('homeForm').addEventListener('change', e => setFormation('home', e.target.value));
+$('awayForm').addEventListener('change', e => setFormation('away', e.target.value));
+
+document.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => {
+  const n = +b.dataset.size; if (n === state.size) return;
+  const forms = Object.keys(FORMATIONS[n]);
+  const oldHome = state.players.filter(p => p.team === 'home'), oldAway = state.players.filter(p => p.team === 'away');
+  state.size = n; state.homeForm = forms[0]; state.awayForm = forms[1] || forms[0];
+  const h = makeTeam('home', n, state.homeForm), a = makeTeam('away', n, state.awayForm);
+  h.forEach((p, i) => { if (oldHome[i]) p.name = oldHome[i].name; });
+  a.forEach((p, i) => { if (oldAway[i]) p.name = oldAway[i].name; });
+  state.players = h.concat(a); state.arrows = []; state.ball = { x: 34, y: 52.5 };
+  selected = null; $('editor').hidden = true;
+  save(); render();
+}));
+
+$('showAway').addEventListener('change', e => { state.showAway = e.target.checked; save(); render(); });
+$('undo').addEventListener('click', () => { state.arrows.pop(); save(); renderArrows(); });
+$('clearArrows').addEventListener('click', () => { state.arrows = []; save(); renderArrows(); });
+$('resetPos').addEventListener('click', () => {
+  ['home', 'away'].forEach(team => {
+    const pos = makeTeam(team, state.size, state[team + 'Form']);
+    state.players.filter(p => p.team === team).forEach((p, i) => { if (pos[i]) { p.x = pos[i].x; p.y = pos[i].y; } });
+  });
+  state.ball = { x: 34, y: 52.5 };
+  save(); renderPlayers();
+});
+
+// ---- situaties opslaan ----
+let toastTimer;
+function toast(msg) { $('toast').textContent = msg; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').textContent = '', 2500); }
+function renderList() {
+  const ul = $('sitList'); ul.textContent = '';
+  if (!situations.length) {
+    const li = document.createElement('li');
+    li.innerHTML = '<p class="empty">Nog niets opgeslagen. Zet een spelsituatie neer, geef hem een naam en tik op Opslaan.</p>';
+    ul.appendChild(li); return;
+  }
+  situations.forEach((s, i) => {
+    const li = document.createElement('li');
+    const meta = document.createElement('div'); meta.className = 'meta';
+    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = s.name;
+    const dt = document.createElement('div'); dt.className = 'dt';
+    dt.textContent = new Date(s.at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }) + ' · ' + s.data.size + '-tal · ' + s.data.homeForm;
+    meta.append(nm, dt);
+    const load = document.createElement('button'); load.className = 'btn'; load.type = 'button'; load.textContent = 'Laden';
+    load.addEventListener('click', () => { state = clone(s.data); selected = null; $('editor').hidden = true; save(); render(); toast('"' + s.name + '" geladen'); });
+    const del = document.createElement('button'); del.className = 'btn danger'; del.type = 'button'; del.textContent = 'Wis';
+    del.addEventListener('click', () => {
+      if (del.dataset.armed) { situations.splice(i, 1); store(SKEY, situations); renderList(); toast('Verwijderd'); }
+      else { del.dataset.armed = '1'; del.textContent = 'Zeker?'; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = 'Wis'; } }, 3000); }
+    });
+    li.append(meta, load, del); ul.appendChild(li);
+  });
+}
+$('sitSave').addEventListener('click', () => {
+  const name = $('sitName').value.trim() || 'Situatie ' + (situations.length + 1);
+  situations.unshift({ name, at: Date.now(), data: clone(state) });
+  store(SKEY, situations); $('sitName').value = ''; renderList(); toast('"' + name + '" opgeslagen');
+});
+$('sitName').addEventListener('keydown', e => { if (e.key === 'Enter') $('sitSave').click(); });
+
+render(); renderList();
+</script>
+
+</body>
+</html>
