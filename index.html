@@ -158,6 +158,18 @@ select{font:500 1rem var(--f-body);color:var(--ink);background:var(--bg);border:
 .tally span{font:700 .75rem var(--f-label);letter-spacing:.1em;text-transform:uppercase}
 .tally .g{background:var(--good-bg);color:var(--good)} .tally .r{background:var(--ok-bg);color:var(--ok)} .tally .f{background:var(--bad-bg);color:var(--bad)}
 .best{font-size:.9rem;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;counter-reset:st}
+.steps li{counter-increment:st;font:700 .74rem/1.1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:3px solid var(--chip);padding-top:6px}
+.steps li::before{content:counter(st) " · "}
+.steps li.done{color:var(--ink);border-color:var(--ink)}
+.steps li.on{color:var(--accent);border-color:var(--accent)}
+.sitlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.sitlist button{width:100%;display:flex;align-items:center;gap:10px;text-align:left;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer;font:600 1rem var(--f-body)}
+.sitlist button:hover{border-color:var(--ink)}
+.sitlist .nm{flex:1;min-width:0}
+.sitlist .ph{font:700 .7rem var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block}
+.sitlist .go{flex:none;font:700 .85rem var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sitlist .done-tag{flex:none}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){.pulse{animation:none}}
 </style>
@@ -197,8 +209,8 @@ img{max-width:100%}
         </g>
         <text class="dir" x="34" y="-0.6" transform="rotate(0)">▲ AANVALSRICHTING</text>
         <g id="trail" class="trail"></g>
-        <g id="marks"></g>
         <g id="players"></g>
+        <g id="marks"></g>
       </svg>
       <div class="caption" id="caption" hidden></div>
     </div>
@@ -867,10 +879,10 @@ function buildScene(sc) {
   mirror = base[0] > 36;
   const st = sc.setup, usShift = st.us || 0;
   players = form.map((p, i) => ({ id: 'u' + i, team: 'us', code: p[2], group: ROLE[p[2]][0], gk: p[2] === 'K', me: i === cfg.pos,
-    x: p[0], y: p[2] === 'K' ? p[1] : p[1] + usShift, dim: true }));
+    x: p[0], y: p[2] === 'K' ? p[1] : p[1] + usShift, bx: p[0], by: p[1], dim: true }));
   const of = FORMS[cfg.size][OPP_FORM[cfg.size]], sh = OPP_SHIFT[sc.ph];
   of.forEach((p, i) => players.push({ id: 't' + i, team: 'them', code: p[2], group: ROLE[p[2]][0], gk: p[2] === 'K',
-    x: 68 - p[0], y: p[2] === 'K' ? 3 : 105 - p[1] + sh, dim: true }));
+    x: 68 - p[0], y: p[2] === 'K' ? 3 : 105 - p[1] + sh, bx: 68 - p[0], by: p[2] === 'K' ? 3 : 105 - p[1] + Math.round(sh * 0.55), dim: true }));
   const me = players.find(p => p.me); me.x = M(st.me[0]); me.y = st.me[1]; me.dim = false;
   assign(st.t || [], players.filter(p => p.team === 'us' && !p.me && !p.gk));
   assign(st.o || [], players.filter(p => p.team === 'them' && !p.gk));
@@ -915,7 +927,7 @@ function drawMarks(opts, onPick) {
     const from = o.kind === 'pass' ? ball : me, tx = M(o.x), ty = o.y;
     const g = el('g', { class: 'mark ' + o.kind, tabindex: '0', role: 'button', 'aria-label': `Keuze ${o.letter}: ${o.label}` });
     let bx = tx, by = ty;
-    if (Math.hypot(tx - from.x, ty - from.y) < 2) { bx = tx + 4; by = ty - 4; }
+    if (Math.hypot(tx - from.x, ty - from.y) < 2) { bx = tx + 4.8; by = ty + 1.5; }
     else g.appendChild(el('line', { x1: from.x, y1: from.y, x2: tx, y2: ty }));
     g.appendChild(el('circle', { cx: bx, cy: by, r: 2.2 }));
     g.appendChild(el('text', { x: bx, y: by + 0.8 }, o.letter));
@@ -1018,7 +1030,11 @@ function renderSetup() {
       </div>
     </section>
     <section>
-      <button type="button" class="btn primary" id="startBtn" ${n ? '' : 'disabled'}>Start training · ${n} situatie${n === 1 ? '' : 's'}</button>
+      <h2>4 · Kies een situatie</h2>
+      <ul class="sitlist">${poolFor(groupNow(), cfg.phase).map(s => `
+        <li><button type="button" data-sit="${s.id}"><span class="nm"><span class="ph">${PHASES[s.ph][0]}</span>${esc(s.sub)}</span><span class="go">▶ Speel</span></button></li>`).join('')}
+      </ul>
+      <button type="button" class="btn primary" id="startBtn" ${n ? '' : 'disabled'}>Of speel ze allemaal · ${n} situatie${n === 1 ? '' : 's'}</button>
       ${best != null ? `<p class="best">Beste score op deze positie en fase: ${best}%</p>` : ''}
     </section>`;
   panel.querySelectorAll('[data-size]').forEach(b => b.onclick = () => {
@@ -1032,23 +1048,54 @@ function renderSetup() {
     cfg.pos = idx >= 0 ? idx : 1; persistCfg(); drawSetupPitch(); renderSetup();
   };
   panel.querySelectorAll('[data-phase]').forEach(b => b.onclick = () => { cfg.phase = b.dataset.phase; persistCfg(); renderSetup(); });
-  $('startBtn').onclick = startSession;
+  $('startBtn').onclick = () => startSession();
+  panel.querySelectorAll('[data-sit]').forEach(b => b.onclick = () => startSession(SC[+b.dataset.sit]));
 }
 
-function startSession() {
-  const list = shuffle(poolFor(groupNow(), cfg.phase));
-  if (cfg.phase === 'alles') { const order = { aanval: 0, omschakelen: 1, verdedigen: 2 }; list.sort((a, b) => order[a.ph] - order[b.ph]); }
-  session = { list, i: 0, results: [], state: 'ask', opts: [], chosen: null };
+function startSession(only) {
+  let list;
+  if (only) list = [only];
+  else {
+    list = shuffle(poolFor(groupNow(), cfg.phase));
+    if (cfg.phase === 'alles') { const order = { aanval: 0, omschakelen: 1, verdedigen: 2 }; list.sort((a, b) => order[a.ph] - order[b.ph]); }
+  }
+  session = { list, i: 0, results: [], state: 'intro', opts: [], chosen: null, single: !!only };
   loadScenario();
+}
+async function intro(sc) {
+  const id = ++runId;
+  buildScene(sc); trailG.textContent = ''; marksG.textContent = '';
+  let holder = null, hd = 2.5;
+  players.forEach(p => { const d = dist(p, ball); if (d < hd) { hd = d; holder = p; } });
+  const movers = players.map(p => { const m = { p, fx: p.bx, fy: p.by, tx: p.x, ty: p.y }; p.x = p.bx; p.y = p.by; return m; });
+  let follow = null;
+  if (holder) { follow = { p: holder, ox: ball.x - movers.find(m => m.p === holder).tx, oy: ball.y - movers.find(m => m.p === holder).ty }; ball.x = holder.x + follow.ox; ball.y = holder.y + follow.oy; }
+  drawPlayers();
+  cap.textContent = 'Kijk goed hoe de situatie ontstaat...'; cap.hidden = false;
+  await sleep(reduce ? 300 : 700); if (id !== runId) return false;
+  const ok = await tween(movers, null, follow, reduce ? 1 : 2200, id); if (!ok) return false;
+  cap.textContent = sc.sub + '. Wat doe jij?';
+  await sleep(reduce ? 200 : 600);
+  return id === runId;
+}
+function showChoices() {
+  const sc = session.list[session.i];
+  resetScene(sc);
+  cap.textContent = 'Stop! Wat doe jij? Kies A, B of C.'; cap.hidden = false;
+  drawMarks(session.opts, choose);
+  session.state = 'ask'; renderPlay();
+}
+async function playIntro() {
+  session.state = 'intro'; renderPlay();
+  const ok = await intro(session.list[session.i]);
+  if (ok && session && session.state === 'intro') showChoices();
 }
 function loadScenario() {
   const sc = session.list[session.i];
   session.opts = shuffle(sc.opts.map(o => ({ kind: o[0], x: o[1], y: o[2], label: o[3], rate: o[4], why: o[5], steps: o[6] })))
     .map((o, i) => Object.assign(o, { letter: 'ABC'[i] }));
-  session.state = 'ask'; session.chosen = null; session.watching = null;
-  resetScene(sc);
-  drawMarks(session.opts, choose);
-  renderPlay();
+  session.chosen = null; session.watching = null;
+  playIntro();
 }
 function resetScene(sc) {
   runId++;
@@ -1087,17 +1134,26 @@ function renderPlay() {
       <div class="chips"><span class="chip ph">${PHASES[sc.ph][0]}</span><span class="chip">${esc(sc.sub)}</span></div>
       <span class="progress">${session.i + 1} / ${total} · ${pts} pnt</span>
     </div>
-    <div class="bar"><i style="width:${(session.i + (session.state === 'ask' ? 0 : 1)) / total * 100}%"></i></div>`;
+    <div class="bar"><i style="width:${(session.i + (session.state === 'ask' || session.state === 'intro' ? 0 : 1)) / total * 100}%"></i></div>
+    <ol class="steps">${['Situatie', 'Bekijk', 'Kies', 'Uitkomst'].map((t, k) => {
+      const cur = session.state === 'intro' ? 1 : session.state === 'ask' ? 2 : 3;
+      return `<li class="${k < cur ? 'done' : k === cur ? 'on' : ''}">${t}</li>`; }).join('')}</ol>`;
   let body = '';
-  if (session.state === 'ask') {
+  if (session.state === 'intro') {
+    body = `
+      <section><h3>${esc(sc.q)}</h3></section>
+      <div class="running"><span class="pulse"></span>Kijk op het veld hoe de situatie ontstaat.</div>
+      <button type="button" class="btn" id="introSkip">Direct naar de keuze</button>`;
+  } else if (session.state === 'ask') {
     body = `
       <section><h3>${esc(sc.q)}</h3></section>
       <div class="opts">${session.opts.map(o => `
         <button type="button" class="opt" data-l="${o.letter}"><span class="letter ${o.kind}">${o.letter}</span>
           <span><span class="kind">${o.kind === 'pass' ? 'Pass' : 'Loopactie'}</span>${esc(o.label)}</span></button>`).join('')}
       </div>
-      <p class="muted" style="font-size:.88rem">Tik op een keuze, hier of op het veld. Witte lijn = jij loopt, gele lijn = de bal.</p>
-      <button type="button" class="linkbtn" id="stopBtn">Stoppen en terug naar instellingen</button>`;
+      <p class="muted" style="font-size:.88rem">Tik op een keuze, hier of op het veld. Witte lijn = jij loopt, gele lijn = de bal. Daarna zie je in een simulatie wat er gebeurt.</p>
+      <div class="btnrow"><button type="button" class="btn" id="replayIntro">▶ Situatie opnieuw bekijken</button></div>
+      <button type="button" class="linkbtn" id="stopBtn">Stoppen en terug naar het begin</button>`;
   } else if (session.state === 'sim') {
     const o = session.chosen;
     body = `
@@ -1123,17 +1179,20 @@ function renderPlay() {
         </ul>
         ${session.watching && session.watching !== o ? `<p style="font-size:.92rem"><b>${RATE[session.watching.rate][0]}:</b> ${esc(session.watching.why)}</p>` : ''}
       </section>
-      <button type="button" class="btn primary" id="nextBtn">${last ? 'Bekijk je score' : 'Volgende situatie'}</button>`;
+      <div class="btnrow">${session.single ? '<button type="button" class="btn" id="otherBtn">Andere situatie kiezen</button>' : ''}<button type="button" class="btn primary" id="nextBtn">${last ? (session.single ? 'Klaar' : 'Bekijk je score') : 'Volgende situatie'}</button></div>`;
   }
   panel.innerHTML = head + body;
   panel.querySelectorAll('.opt[data-l]').forEach(b => b.onclick = () => choose(session.opts.find(o => o.letter === b.dataset.l)));
   panel.querySelectorAll('[data-w]').forEach(b => b.onclick = () => watch(session.opts.find(o => o.letter === b.dataset.w)));
   const stop = $('stopBtn'); if (stop) stop.onclick = toSetup;
+  const isk = $('introSkip'); if (isk) isk.onclick = () => { runId++; showChoices(); };
+  const ri = $('replayIntro'); if (ri) ri.onclick = playIntro;
   const skip = $('skipBtn'); if (skip) skip.onclick = () => { runId++; session.state = 'done'; showEnd(); renderPlay(); };
   const next = $('nextBtn'); if (next) next.onclick = () => {
     runId++;
-    if (session.i < total - 1) { session.i++; loadScenario(); } else renderEnd();
+    if (session.i < total - 1) { session.i++; loadScenario(); } else if (session.single) toSetup(); else renderEnd();
   };
+  const oth = $('otherBtn'); if (oth) oth.onclick = toSetup;
 }
 function showEnd() {
   /* simulatie overgeslagen: laat de eindsituatie van de gekozen optie direct zien */
@@ -1171,7 +1230,7 @@ function renderEnd() {
       <ul class="all">${r.map(x => `<li><span class="lbl">${PHASES[x.sc.ph][0]} · ${esc(x.sc.sub)}</span><span class="rate ${x.rate}">${RATE[x.rate][0]}</span></li>`).join('')}</ul>
     </section>
     <div class="btnrow"><button type="button" class="btn primary" id="againBtn">Opnieuw</button><button type="button" class="btn" id="setupBtn">Andere positie</button></div>`;
-  $('againBtn').onclick = startSession;
+  $('againBtn').onclick = () => startSession();
   $('setupBtn').onclick = toSetup;
 }
 function toSetup() { runId++; session = null; drawSetupPitch(); renderSetup(); }
