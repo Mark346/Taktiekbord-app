@@ -14,12 +14,13 @@
 <title>Tactiekbord</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@600;700&family=Big+Shoulders+Display:wght@800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=Big+Shoulders+Display:wght@800&display=swap">
 <style>
-/* Layout: het veld is het hoofdobject (links, zo hoog als het scherm toelaat); bediening in een smalle kolom rechts, op telefoon eronder */
+/* Layout: het veld is het hoofdobject (links, schermhoog); de trainer-kaart rechts, op telefoon eronder */
 :root{
   --bg:#ECF0EB; --surface:#FFFFFF; --ink:#14201A; --muted:#58675E; --line:#D3DAD4; --chip:#E1E7E2;
   --accent:#D3402A; --accent-ink:#FFFFFF;
+  --good:#1D7F45; --good-bg:#E2F3E8; --ok:#9A6A00; --ok-bg:#FBF0D3; --bad:#C0352B; --bad-bg:#FBE4E1;
   --home:#D3402A; --home-gk:#F2C230; --away:#1D4FC4; --away-gk:#1F9C68;
   --grass-a:#2F7E46; --grass-b:#2A7340; --chalk:#F3F6F1;
   --f-display:'Big Shoulders Display','Arial Narrow',Impact,sans-serif;
@@ -30,6 +31,7 @@
   :root:not([data-theme="light"]){
     --bg:#0E1511; --surface:#17211B; --ink:#E6EDE8; --muted:#93A399; --line:#2A362F; --chip:#212C25;
     --accent:#FF6A4F; --accent-ink:#1A0A06;
+    --good:#5BD38A; --good-bg:#15301F; --ok:#F2C14E; --ok-bg:#33290F; --bad:#FF7A6B; --bad-bg:#3A1A16;
     --grass-a:#256A3A; --grass-b:#215F34; --chalk:#E9EFE7;
     color-scheme:dark;
   }
@@ -37,93 +39,132 @@
 :root[data-theme="dark"]{
   --bg:#0E1511; --surface:#17211B; --ink:#E6EDE8; --muted:#93A399; --line:#2A362F; --chip:#212C25;
   --accent:#FF6A4F; --accent-ink:#1A0A06;
+  --good:#5BD38A; --good-bg:#15301F; --ok:#F2C14E; --ok-bg:#33290F; --bad:#FF7A6B; --bad-bg:#3A1A16;
   --grass-a:#256A3A; --grass-b:#215F34; --chalk:#E9EFE7;
   color-scheme:dark;
 }
 body{
-  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px;
+  background:var(--bg); color:var(--ink); font-family:var(--f-body); font-size:15px; line-height:1.45;
   padding-left:max(16px, env(safe-area-inset-left, 0px));
   padding-right:max(16px, env(safe-area-inset-right, 0px));
 }
-.wrap{max-width:1120px;margin:0 auto;padding-block:18px 36px}
-header{display:flex;align-items:flex-end;justify-content:space-between;gap:8px 16px;flex-wrap:wrap;margin-bottom:16px}
-h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3rem);text-transform:uppercase;letter-spacing:.01em;line-height:.85;margin:0}
-.score{display:flex;align-items:center;gap:10px;font-family:var(--f-label);font-weight:700;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;font-variant-numeric:tabular-nums}
-.score .team{display:inline-flex;align-items:center;gap:6px}
-.dot{width:12px;height:12px;border-radius:50%;flex:none}
-.dot.home{background:var(--home)} .dot.away{background:var(--away)}
-.score .vs{color:var(--muted);font-weight:600}
+.wrap{max-width:1140px;margin:0 auto;padding-block:16px 36px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:6px 16px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,6vw,2.9rem);text-transform:uppercase;line-height:.85;margin:0}
+.sub{margin:0;color:var(--muted);font:600 .95rem var(--f-label);letter-spacing:.06em;text-transform:uppercase}
 
-.app{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:24px;align-items:start}
-@media (max-width:800px){.app{grid-template-columns:minmax(0,1fr)}}
-.board-col{display:flex;flex-direction:column;gap:10px;min-width:0}
-.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
-.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;gap:2px}
-.seg button{font:600 .95rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:0;background:transparent;color:var(--muted);padding:9px 14px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .18)}
-.swatch{width:20px;height:0;border-top:3px solid;display:inline-block}
-.sw-run{border-color:#7C8A81} .sw-pass{border-color:#D9A800;border-top-style:dashed} .sw-dribble{border-color:#3BA6CF;border-top-style:dotted}
-.hint{text-align:center;color:var(--muted);font-size:.9rem;margin:0}
-
-.pitch-box{position:relative;width:min(100%, calc((100dvh - 180px) * 74 / 111));min-width:min(100%, 320px);max-width:100%;aspect-ratio:74/111;margin-inline:auto}
-.pitch-box svg{display:block;width:100%;height:100%;touch-action:none;user-select:none;-webkit-user-select:none;border-radius:8px;background:var(--grass-b)}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:24px;align-items:start}
+@media (max-width:820px){.app{grid-template-columns:minmax(0,1fr);gap:16px}}
+.pitch-box{position:relative;width:min(100%, calc((100dvh - 110px) * 74 / 111));min-width:min(100%,300px);aspect-ratio:74/111;margin-inline:auto}
+@media (max-width:820px){.pitch-box{width:min(100%, calc(62dvh * 74 / 111))}}
+.pitch-box svg{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;border-radius:8px;background:var(--grass-b)}
 .grass-a{fill:var(--grass-a)} .grass-b{fill:var(--grass-b)}
 .lines *{fill:none;stroke:var(--chalk);stroke-width:.35}
 .lines .spot{fill:var(--chalk);stroke:none}
-.player,.ball{cursor:grab}
-.player .disc{stroke:#fff;stroke-width:.45}
-.player.home .disc{fill:var(--home)} .player.home.gk .disc{fill:var(--home-gk)}
-.player.away .disc{fill:var(--away)} .player.away.gk .disc{fill:var(--away-gk)}
-.player .num{font:700 2.7px var(--f-label);fill:#fff;text-anchor:middle;pointer-events:none}
-.player.home.gk .num{fill:#2A2205}
-.player .pname{font:600 1.9px var(--f-label);fill:#fff;text-anchor:middle;paint-order:stroke;stroke:rgb(0 0 0 / .6);stroke-width:.55;pointer-events:none}
-.player .ring{fill:none;stroke:#fff;stroke-width:.35;stroke-dasharray:.9 .6;display:none}
-.player.sel .ring{display:block}
-.player .hit{fill:transparent}
-.ball .b{fill:#fff;stroke:#1a1a1a;stroke-width:.3}
+.dir{font:700 2px var(--f-label);fill:var(--chalk);opacity:.55;letter-spacing:.2px;text-anchor:middle}
+
+.pl .disc{stroke:#fff;stroke-width:.4}
+.pl.us .disc{fill:var(--home)} .pl.us.gk .disc{fill:var(--home-gk)}
+.pl.them .disc{fill:var(--away)} .pl.them.gk .disc{fill:var(--away-gk)}
+.pl .code{font:700 1.85px var(--f-label);fill:#fff;text-anchor:middle;pointer-events:none}
+.pl.us.gk .code{fill:#2A2205}
+.pl.dim{opacity:.45}
+.pl .ring{fill:none;stroke:#fff;stroke-width:.4;stroke-dasharray:1 .6}
+.pl .tag rect{fill:#fff}
+.pl .tag text{font:700 1.7px var(--f-label);fill:#14201A;text-anchor:middle;letter-spacing:.1px}
+.pl.pick{cursor:pointer}
+.pl.pick:hover .disc{stroke-width:.8}
+.ball .b{fill:#fff;stroke:#1a1a1a;stroke-width:.28}
 .ball .p{fill:#1a1a1a}
-svg.drawing .player, svg.drawing .ball{pointer-events:none}
-svg.drawing{cursor:crosshair}
-.arrow{fill:none;stroke-width:.5;stroke-linecap:round;stroke-linejoin:round;pointer-events:none}
-.arrow.run{stroke:#FFFFFF}
-.arrow.pass{stroke:#FFD84D;stroke-dasharray:1.3 .9}
-.arrow.dribble{stroke:#9EE6FF}
+.mark{cursor:pointer}
+.mark line{stroke-width:.45;stroke-dasharray:1.2 .8;stroke-linecap:round}
+.mark.run line{stroke:#fff} .mark.pass line{stroke:#FFD84D}
+.mark circle{stroke:#14201A;stroke-width:.25}
+.mark.run circle{fill:#fff} .mark.pass circle{fill:#FFD84D}
+.mark text{font:700 2.3px var(--f-label);fill:#14201A;text-anchor:middle;pointer-events:none}
+.mark:hover circle{stroke-width:.5}
+.trail line{stroke-width:.4;stroke-linecap:round;opacity:.8}
+.trail .tb{stroke:#FFD84D;stroke-dasharray:1 .7}
+.trail .tm{stroke:#fff;stroke-dasharray:.6 .6}
 
-.editor{position:absolute;left:10px;right:10px;bottom:10px;background:var(--surface);color:var(--ink);border-radius:10px;padding:12px;box-shadow:0 8px 28px rgb(0 0 0 / .3);display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
-.editor .f{display:flex;flex-direction:column;gap:4px;min-width:0}
-.editor .f.name{flex:1 1 140px}
-.editor .f.nr input{width:56px}
+.caption{position:absolute;left:10px;right:10px;top:10px;background:rgb(10 22 15 / .86);color:#fff;border-radius:8px;padding:9px 12px;font:600 1rem/1.3 var(--f-body);text-align:center;pointer-events:none}
 
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:20px;min-width:0}
-.panel section{display:flex;flex-direction:column;gap:10px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel section{display:flex;flex-direction:column;gap:9px}
 h2{font:700 .8rem/1 var(--f-label);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}
-label.lbl{font:600 .78rem/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.row{display:flex;align-items:center;gap:10px}
-.row .grow{flex:1;min-width:0}
-select,input[type="text"]{font:500 1rem var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
-.btn{font:600 .95rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:10px 12px;border-radius:8px;cursor:pointer}
+h3{font:700 1.3rem/1.2 var(--f-body);margin:0;text-wrap:balance}
+p{margin:0}
+.muted{color:var(--muted)}
+.seg{display:inline-flex;background:var(--chip);border-radius:999px;padding:3px;gap:2px;align-self:flex-start}
+.seg button{font:600 .95rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:0;background:transparent;color:var(--muted);padding:9px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgb(0 0 0 / .18)}
+select{font:500 1rem var(--f-body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%}
+.poschip{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--chip);font-weight:600}
+.poschip .dot{width:14px;height:14px;border-radius:50%;background:var(--home);flex:none}
+.phases{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.phase{display:flex;flex-direction:column;gap:2px;text-align:left;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:10px 12px;cursor:pointer;font:inherit}
+.phase b{font:700 1.05rem/1.1 var(--f-label);letter-spacing:.04em;text-transform:uppercase}
+.phase span{font-size:.85rem;color:var(--muted);line-height:1.3}
+.phase[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.btn{font:700 1rem/1 var(--f-label);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:12px 14px;border-radius:9px;cursor:pointer}
 .btn:hover{background:var(--chip)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.btn.primary:hover{filter:brightness(1.05);background:var(--accent)}
-.btn.danger{color:var(--accent)}
-.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.btns .wide{grid-column:1/-1}
-.check{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer}
-.check input{width:18px;height:18px;accent-color:var(--away)}
-.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
-.list li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line)}
-.list li:first-child{border-top:0}
-.list .meta{flex:1;min-width:0}
-.list .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.list .dt{font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
-.list .btn{padding:7px 9px;font-size:.85rem}
-.empty{color:var(--muted);font-size:.9rem;margin:0}
-.toast{font-size:.85rem;color:var(--muted);min-height:1.1em;margin:0}
+.btn.primary:hover{filter:brightness(1.06);background:var(--accent)}
+.btn:disabled{opacity:.5;cursor:default}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap}
+.btnrow .btn{flex:1 1 auto}
+.linkbtn{border:0;background:none;color:var(--muted);font:600 .9rem var(--f-body);text-decoration:underline;cursor:pointer;padding:0;align-self:flex-start}
+
+.topline{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:700 .78rem/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;background:var(--chip);color:var(--ink);padding:6px 9px;border-radius:999px}
+.chip.ph{background:var(--accent);color:var(--accent-ink)}
+.progress{font:700 .9rem var(--f-label);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{height:5px;background:var(--chip);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{display:flex;gap:11px;align-items:flex-start;text-align:left;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:11px 12px;cursor:pointer;font:500 1rem/1.35 var(--f-body)}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt:disabled{cursor:default}
+.letter{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font:700 .95rem var(--f-label);background:var(--ink);color:var(--surface)}
+.letter.pass{background:#E3B500;color:#14201A}
+.opt .kind{display:block;font:700 .72rem var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1px}
+
+.verdict{border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.verdict .vt{font:700 1.5rem/1 var(--f-display);text-transform:uppercase;letter-spacing:.02em}
+.verdict.g{background:var(--good-bg)} .verdict.g .vt{color:var(--good)}
+.verdict.r{background:var(--ok-bg)} .verdict.r .vt{color:var(--ok)}
+.verdict.f{background:var(--bad-bg)} .verdict.f .vt{color:var(--bad)}
+.rate{flex:none;font:700 .75rem/1 var(--f-label);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.rate.g{background:var(--good-bg);color:var(--good)} .rate.r{background:var(--ok-bg);color:var(--ok)} .rate.f{background:var(--bad-bg);color:var(--bad)}
+.all{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.all li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.all li:first-child{border-top:0}
+.all .lbl{flex:1;min-width:0;font-size:.95rem}
+.all .mine{font:700 .7rem var(--f-label);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block}
+.watch{flex:none;font:700 .85rem/1 var(--f-label);letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:8px 10px;cursor:pointer}
+.watch:hover:not(:disabled){background:var(--chip)}
+.watch:disabled{opacity:.5;cursor:default}
+.running{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.25}}
+
+.score{display:flex;align-items:baseline;gap:10px}
+.score .big{font:800 3.4rem/1 var(--f-display);font-variant-numeric:tabular-nums}
+.tally{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tally div{border-radius:10px;padding:10px;text-align:center}
+.tally b{display:block;font:800 1.8rem/1 var(--f-display)}
+.tally span{font:700 .75rem var(--f-label);letter-spacing:.1em;text-transform:uppercase}
+.tally .g{background:var(--good-bg);color:var(--good)} .tally .r{background:var(--ok-bg);color:var(--ok)} .tally .f{background:var(--bad-bg);color:var(--bad)}
+.best{font-size:.9rem;color:var(--muted)}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){.pulse{animation:none}}
 </style>
 <style>
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 body{margin:0;-webkit-tap-highlight-color:transparent}
+img{max-width:100%}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -132,391 +173,1010 @@ body{margin:0;-webkit-tap-highlight-color:transparent}
 <div class="wrap">
   <header>
     <h1>Tactiekbord</h1>
-    <div class="score" aria-live="polite">
-      <span class="team"><span class="dot home"></span><span id="scoreHome">Wij 4-3-3</span></span>
-      <span class="vs" id="scoreVs">vs</span>
-      <span class="team" id="scoreAwayWrap"><span class="dot away"></span><span id="scoreAway">Tegenstander 4-4-2</span></span>
-    </div>
+    <p class="sub" id="sub">Lees het spel. Maak de juiste keuze.</p>
   </header>
-
   <div class="app">
-    <div class="board-col">
-      <div class="toolbar">
-        <div class="seg" role="group" aria-label="Modus">
-          <button type="button" id="modeMove" aria-pressed="true">Verplaatsen</button>
-          <button type="button" id="modeDraw" aria-pressed="false">Tekenen</button>
-        </div>
-        <div class="seg" role="group" aria-label="Soort pijl" id="arrowTypes" hidden>
-          <button type="button" data-type="run" aria-pressed="true"><span class="swatch sw-run"></span>Loopactie</button>
-          <button type="button" data-type="pass" aria-pressed="false"><span class="swatch sw-pass"></span>Pass</button>
-          <button type="button" data-type="dribble" aria-pressed="false"><span class="swatch sw-dribble"></span>Dribbel</button>
-        </div>
-      </div>
-      <p class="hint" id="hint">Sleep spelers en de bal. Tik op een speler om een naam te geven.</p>
-
-      <div class="pitch-box">
-        <svg id="pitch" viewBox="-3 -3 74 111" aria-label="Voetbalveld">
-          <defs>
-            <marker id="ah-run" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFFFFF"/></marker>
-            <marker id="ah-pass" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFD84D"/></marker>
-            <marker id="ah-dribble" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#9EE6FF"/></marker>
-          </defs>
-          <g id="grass"></g>
-          <g class="lines">
-            <rect x="0" y="0" width="68" height="105"/>
-            <line x1="0" y1="52.5" x2="68" y2="52.5"/>
-            <circle cx="34" cy="52.5" r="9.15"/>
-            <circle class="spot" cx="34" cy="52.5" r=".45"/>
-            <rect x="13.84" y="0" width="40.32" height="16.5"/>
-            <rect x="24.84" y="0" width="18.32" height="5.5"/>
-            <circle class="spot" cx="34" cy="11" r=".45"/>
-            <path d="M26.69 16.5 A9.15 9.15 0 0 0 41.31 16.5"/>
-            <rect x="13.84" y="88.5" width="40.32" height="16.5"/>
-            <rect x="24.84" y="99.5" width="18.32" height="5.5"/>
-            <circle class="spot" cx="34" cy="94" r=".45"/>
-            <path d="M26.69 88.5 A9.15 9.15 0 0 1 41.31 88.5"/>
-            <path d="M1 0 A1 1 0 0 1 0 1"/>
-            <path d="M67 0 A1 1 0 0 0 68 1"/>
-            <path d="M0 104 A1 1 0 0 1 1 105"/>
-            <path d="M68 104 A1 1 0 0 0 67 105"/>
-            <rect x="30.34" y="-2" width="7.32" height="2"/>
-            <rect x="30.34" y="105" width="7.32" height="2"/>
-          </g>
-          <g id="arrows"></g>
-          <g id="players"></g>
-        </svg>
-
-        <div class="editor" id="editor" hidden>
-          <div class="f nr"><label class="lbl" for="edNum">Nummer</label><input type="text" id="edNum" inputmode="numeric" maxlength="2"></div>
-          <div class="f name"><label class="lbl" for="edName">Naam</label><input type="text" id="edName" maxlength="14" placeholder="Bijv. Daan"></div>
-          <button type="button" class="btn primary" id="edClose">Klaar</button>
-        </div>
-      </div>
+    <div class="pitch-box">
+      <svg id="pitch" viewBox="-3 -3 74 111" aria-label="Voetbalveld">
+        <g id="grass"></g>
+        <g class="lines">
+          <rect x="0" y="0" width="68" height="105"/>
+          <line x1="0" y1="52.5" x2="68" y2="52.5"/>
+          <circle cx="34" cy="52.5" r="9.15"/>
+          <circle class="spot" cx="34" cy="52.5" r=".45"/>
+          <rect x="13.84" y="0" width="40.32" height="16.5"/>
+          <rect x="24.84" y="0" width="18.32" height="5.5"/>
+          <circle class="spot" cx="34" cy="11" r=".45"/>
+          <path d="M26.69 16.5 A9.15 9.15 0 0 0 41.31 16.5"/>
+          <rect x="13.84" y="88.5" width="40.32" height="16.5"/>
+          <rect x="24.84" y="99.5" width="18.32" height="5.5"/>
+          <circle class="spot" cx="34" cy="94" r=".45"/>
+          <path d="M26.69 88.5 A9.15 9.15 0 0 1 41.31 88.5"/>
+          <rect x="30.34" y="-2" width="7.32" height="2"/>
+          <rect x="30.34" y="105" width="7.32" height="2"/>
+        </g>
+        <text class="dir" x="34" y="-0.6" transform="rotate(0)">▲ AANVALSRICHTING</text>
+        <g id="trail" class="trail"></g>
+        <g id="marks"></g>
+        <g id="players"></g>
+      </svg>
+      <div class="caption" id="caption" hidden></div>
     </div>
-
-    <aside class="panel">
-      <section>
-        <h2>Teamgrootte</h2>
-        <div class="seg" role="group" aria-label="Teamgrootte" style="align-self:flex-start">
-          <button type="button" data-size="11" aria-pressed="true">11-tal</button>
-          <button type="button" data-size="8" aria-pressed="false">8-tal</button>
-        </div>
-      </section>
-
-      <section>
-        <h2>Opstelling</h2>
-        <div class="row"><span class="dot home"></span><label class="lbl" for="homeForm" style="width:92px">Wij</label><select id="homeForm" class="grow"></select></div>
-        <div class="row"><span class="dot away"></span><label class="lbl" for="awayForm" style="width:92px">Tegenstander</label><select id="awayForm" class="grow"></select></div>
-        <label class="check"><input type="checkbox" id="showAway" checked> Tegenstander tonen</label>
-      </section>
-
-      <section>
-        <h2>Bord</h2>
-        <div class="btns">
-          <button type="button" class="btn" id="undo">Laatste pijl weg</button>
-          <button type="button" class="btn" id="clearArrows">Pijlen wissen</button>
-          <button type="button" class="btn wide" id="resetPos">Spelers terug naar opstelling</button>
-        </div>
-      </section>
-
-      <section>
-        <h2>Situaties</h2>
-        <div class="row">
-          <input type="text" id="sitName" class="grow" maxlength="40" placeholder="Bijv. Opbouw van achteruit" aria-label="Naam van de situatie">
-          <button type="button" class="btn primary" id="sitSave">Opslaan</button>
-        </div>
-        <p class="toast" id="toast"></p>
-        <ul class="list" id="sitList"></ul>
-      </section>
-    </aside>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
   </div>
 </div>
 
 <script>
-const SVGNS = 'http://www.w3.org/2000/svg';
-// [x, y, rugnummer] voor ons team (speelt naar boven). Tegenstander wordt gespiegeld.
-const FORMATIONS = {
-  11: {
-    '4-3-3':   [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[18,73,10],[34,76,6],[50,73,8],[12,60,11],[34,58,9],[56,60,7]],
-    '4-4-2':   [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[9,72,11],[26,74,6],[42,74,8],[59,72,7],[27,60,10],[41,59,9]],
-    '4-2-3-1': [[34,100,1],[10,86,5],[26,88,4],[42,88,3],[58,86,2],[27,78,6],[41,78,8],[12,67,11],[34,67,10],[56,67,7],[34,58,9]],
-    '3-5-2':   [[34,100,1],[18,88,4],[34,89,3],[50,88,2],[7,74,5],[22,76,6],[34,72,10],[46,76,8],[61,74,7],[27,60,11],[41,59,9]],
-    '3-4-3':   [[34,100,1],[18,88,4],[34,89,3],[50,88,2],[9,74,5],[27,76,6],[41,76,8],[59,74,7],[13,61,11],[34,58,9],[55,61,10]]
+/* ===================== Opstellingen ===================== */
+const ROLE = {
+  K:['gk','Keeper'], LB:['back','Linksback'], RB:['back','Rechtsback'], LA:['back','Linksachter'], RA:['back','Rechtsachter'],
+  LWB:['back','Linker wingback'], RWB:['back','Rechter wingback'], LCV:['cv','Linker centrale verdediger'], RCV:['cv','Rechter centrale verdediger'],
+  CV:['cv','Centrale verdediger'], '6':['mid6','Controleur (6)'], '8':['mid8','Middenvelder (8)'], '10':['mid8','Aanvallende middenvelder (10)'],
+  LW:['wing','Linksbuiten'], RW:['wing','Rechtsbuiten'], LM:['wing','Linkermiddenvelder'], RM:['wing','Rechtermiddenvelder'], ST:['st','Spits']
+};
+const FORMS = {
+  11:{
+    '4-3-3':[[34,100,'K'],[10,86,'LB'],[26,88,'LCV'],[42,88,'RCV'],[58,86,'RB'],[20,72,'8'],[34,77,'6'],[48,72,'8'],[12,58,'LW'],[34,56,'ST'],[56,58,'RW']],
+    '4-4-2':[[34,100,'K'],[10,86,'LB'],[26,88,'LCV'],[42,88,'RCV'],[58,86,'RB'],[9,72,'LM'],[27,76,'6'],[41,76,'8'],[59,72,'RM'],[27,58,'ST'],[41,57,'ST']],
+    '4-2-3-1':[[34,100,'K'],[10,86,'LB'],[26,88,'LCV'],[42,88,'RCV'],[58,86,'RB'],[27,78,'6'],[41,78,'6'],[12,64,'LW'],[34,66,'10'],[56,64,'RW'],[34,54,'ST']],
+    '3-5-2':[[34,100,'K'],[18,88,'LCV'],[34,90,'CV'],[50,88,'RCV'],[6,72,'LWB'],[34,78,'6'],[22,70,'8'],[46,70,'8'],[62,72,'RWB'],[27,56,'ST'],[41,56,'ST']],
+    '3-4-3':[[34,100,'K'],[18,88,'LCV'],[34,90,'CV'],[50,88,'RCV'],[8,74,'LWB'],[27,76,'6'],[41,76,'8'],[60,74,'RWB'],[13,58,'LW'],[34,55,'ST'],[55,58,'RW']]
   },
-  8: {
-    '3-3-1': [[34,100,1],[14,87,5],[34,88,3],[54,87,2],[14,74,10],[34,75,6],[54,74,8],[34,61,9]],
-    '2-3-2': [[34,100,1],[22,88,4],[46,88,3],[12,75,11],[34,76,6],[56,75,7],[25,62,10],[43,62,9]],
-    '3-2-2': [[34,100,1],[14,87,5],[34,88,3],[54,87,2],[25,76,6],[43,76,8],[22,62,11],[46,62,7]]
+  8:{
+    '3-3-1':[[34,100,'K'],[12,86,'LA'],[34,88,'CV'],[56,86,'RA'],[12,70,'LM'],[34,74,'6'],[56,70,'RM'],[34,58,'ST']],
+    '2-3-2':[[34,100,'K'],[24,88,'LCV'],[44,88,'RCV'],[10,72,'LM'],[34,75,'6'],[58,72,'RM'],[26,58,'ST'],[42,58,'ST']],
+    '3-2-2':[[34,100,'K'],[12,86,'LA'],[34,88,'CV'],[56,86,'RA'],[26,74,'6'],[42,74,'8'],[22,58,'ST'],[46,58,'ST']]
   }
 };
-const KEY = 'tactiekbord.v1', SKEY = 'tactiekbord.situaties.v1';
-const store = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
-const read = k => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch (e) { return null; } };
-const clone = o => JSON.parse(JSON.stringify(o));
+const OPP_FORM = {11:'4-4-2', 8:'3-3-1'};
+const OPP_SHIFT = {aanval:38, omschakelen:28, verdedigen:22};
+const PHASES = {
+  aanval:['Opbouw & aanval','Jullie hebben de bal. Vanaf de keeper naar voren.'],
+  omschakelen:['Omschakelen','Bal net verloren of net gewonnen. Snel kiezen.'],
+  verdedigen:['Verdedigen','De tegenstander heeft de bal.'],
+  alles:['Alles','Een mix van alle situaties.']
+};
+const RATE = {g:['Goed',2], r:['Redelijk',1], f:['Fout',0]};
 
-function makeTeam(team, size, form) {
-  return FORMATIONS[size][form].map(([x, y, n], i) => ({
-    id: team + i, team, num: String(n), name: '', gk: i === 0,
-    x: team === 'home' ? x : 68 - x, y: team === 'home' ? y : 105 - y
-  }));
+function posName(form, i) {
+  const p = form[i], [, name] = ROLE[p[2]];
+  const dup = form.filter(q => q[2] === p[2]).length > 1;
+  return dup ? name + (p[0] < 34 ? ', links' : ', rechts') : name;
 }
-function defaultState() {
-  return {
-    size: 11, homeForm: '4-3-3', awayForm: '4-4-2', showAway: true,
-    players: makeTeam('home', 11, '4-3-3').concat(makeTeam('away', 11, '4-4-2')),
-    ball: { x: 34, y: 66 },
-    arrows: [
-      { type: 'pass', x1: 34, y1: 74, x2: 53, y2: 61.5 },
-      { type: 'run', x1: 57.5, y1: 57.5, x2: 60, y2: 38 },
-      { type: 'dribble', x1: 12, y1: 57.5, x2: 19, y2: 42 }
-    ]
+
+/* ===================== Situaties =====================
+   Alle coördinaten zijn geschreven voor een speler aan de LINKERkant (x 0-68, y 0 = goal tegenstander, y 105 = eigen goal).
+   Voor spelers aan de rechterkant wordt alles gespiegeld.
+   setup: ball, me, t = medespelers, o = tegenstanders ([x,y,rolhint]).
+   keuze: [soort, doelX, doelY, tekst, beoordeling, uitleg, stappen]
+   stap: [onderschrift, ...acties]  acties: ['m',x,y] jij loopt, ['t',vanX,vanY,x,y] medespeler, ['o',vanX,vanY,x,y] tegenstander, ['b',x,y] bal */
+const SC = [];
+const S = (g, ph, sub, q, setup, opts) => SC.push({ id: SC.length, g, ph, sub, q, setup, opts });
+
+/* ---------- KEEPER ---------- */
+S('gk','aanval','Doeltrap','Doeltrap. Hun twee spitsen zetten druk op je centrale verdedigers. Waar speel je de bal naartoe?',
+ {ball:[34,99], me:[34,99], t:[[22,96,'cv'],[46,96,'cv'],[6,82,'back'],[34,84,'mid'],[34,46,'st']], o:[[25,92,'st'],[44,90,'st'],[16,72,'wing'],[34,80,'mid'],[34,42,'cv']]},
+ [['pass',22,96,'Kort op de linker centrale verdediger','f','De spits staat er bovenop. Je verdediger krijgt de bal met zijn rug naar het veld en verliest hem in jullie eigen zestien.',[
+    ['Je speelt kort in op je centrale verdediger.',['b',22,96],['o',25,92,23.5,94.5]],
+    ['De spits zit er meteen bovenop en pakt de bal af.',['b',23.8,95],['o',23.5,94.5,24,95.4]],
+    ['Hij schiet meteen. Gevaarlijk!',['b',36.5,105]]]],
+  ['pass',7,82,'Op de vrije linksback langs de lijn','g','De back staat vrij en kan met zijn gezicht naar voren aannemen. De buitenspeler van de tegenstander staat te ver weg om op tijd te komen.',[
+    ['Je speelt de bal strak en vlak naar de back.',['b',7,82],['o',16,72,12,76]],
+    ['Hij neemt aan in de loop en dribbelt vooruit.',['t',6,82,9,68],['o',12,76,13,73]],
+    ['De druk is gebroken. Jullie spelen op via de vleugel.',['b',22,61],['t',34,84,22,61]]]],
+  ['pass',33,45,'Lange bal naar de spits','r','Geen risico bij je eigen goal, maar een lange bal wordt vaak een kopduel. Meestal heeft de tegenstander de bal daarna weer.',[
+    ['Je trapt de bal lang naar voren.',['b',33,45],['t',34,46,33,46],['o',34,42,33,44.5]],
+    ['Kopduel. De verdediger is er net eerder bij.',['b',27,36],['o',33,44.5,33,43]],
+    ['De tegenstander heeft de bal weer.',['o',27,32,27,35.5]]]]
+ ]);
+S('gk','aanval','Terugspeelbal','Je linker centrale verdediger speelt de bal terug. Hun spits sprint van links op je af. Wat doe je?',
+ {ball:[33,97], me:[34,98], t:[[20,95,'cv'],[48,94,'cv'],[34,84,'mid']], o:[[27,92,'st'],[40,80,'st'],[34,80,'mid']]},
+ [['pass',48,94,'Doorspelen naar de rechter centrale verdediger','g','De druk komt van links. Door de bal naar de andere kant te spelen, speel je de spits uit en staat je verdediger vrij.',[
+    ['Je speelt de bal in één keer door naar rechts.',['b',48,94],['o',27,92,33,95]],
+    ['De spits komt te laat. Je verdediger dribbelt vooruit.',['t',48,94,50,80],['o',33,95,38,93]]]],
+  ['pass',21,95,'Terug naar de linker centrale verdediger','f','Je speelt de bal terug naar de kant waar de spits vandaan komt. Hij kan de pass onderscheppen.',[
+    ['Je speelt terug naar links.',['b',24,94.5],['o',27,92,24,94.5]],
+    ['De spits onderschept de bal voor de goal.',['o',24,94.5,28,97]],
+    ['Hij schiet...',['b',36,105]]]],
+  ['pass',30,40,'De bal ver naar voren trappen','r','Veilig, want de spits krijgt geen kans. Maar je geeft de bal vaak weg. Doe dit alleen als alles dichtstaat.',[
+    ['Je trapt de bal ver weg.',['b',30,40]],
+    ['De tegenstander pakt de bal op het middenveld.',['o',30,46,30,41]]]]
+ ]);
+S('gk','omschakelen','Balverlies','Balverlies. Jullie verdediging staat hoog. Hun middenvelder staat op het punt een steekbal te geven. Wat doe jij?',
+ {ball:[40,60], me:[34,99], us:-14, t:[[26,70,'cv'],[42,70,'cv'],[10,72,'back'],[58,72,'back']], o:[[40,60,'mid'],[30,64,'st']]},
+ [['run',31,84,'Op tijd uitkomen en de bal wegwerken','g','Een keeper die meeverdedigt achter een hoge lijn is goud waard. Jij bent eerder bij de bal dan de spits.',[
+    ['De steekbal komt. Jij komt meteen uit.',['b',31,83],['o',30,64,30,79],['m',31,84]],
+    ['Jij bent eerder en schiet de bal ver weg.',['b',4,66]]]],
+  ['run',34,102,'Op de doellijn blijven staan','f','De spits krijgt alle ruimte en staat alleen voor je. Van zo dichtbij is het bijna altijd raak.',[
+    ['De steekbal komt. Jij blijft op je lijn.',['b',31,82],['o',30,64,31,81],['m',34,102]],
+    ['De spits neemt aan en loopt door.',['o',31,81,33,92]],
+    ['Hij schiet raak.',['b',37,105]]]],
+  ['run',33,94,'Een paar meter uitkomen en afwachten','r','Je verkleint de hoek een beetje, maar de spits krijgt de bal en mag op je af. Soms red je hem, soms niet.',[
+    ['De steekbal komt. Jij doet een paar stappen naar voren.',['b',31,82],['o',30,64,31,81],['m',33,94]],
+    ['De spits loopt door en schiet.',['o',31,81,32,88]],
+    ['Jij redt met je voet. Hoekschop.',['b',45,105]]]]
+ ]);
+S('gk','omschakelen','Balwinst','Je vangt een voorzet. Veel tegenstanders staan nog voor jouw goal. Wat doe je met de bal?',
+ {ball:[32,96], me:[32,96], t:[[10,64,'wing'],[34,60,'st'],[26,92,'cv'],[42,92,'cv']], o:[[30,90,'st'],[38,88,'st'],[22,86,'wing'],[44,84,'wing'],[34,80,'mid']]},
+ [['pass',10,65,'Snel uitgooien naar de vrije buitenspeler','g','De tegenstander is nog niet terug. Met een snelle uitworp zet je meteen een counter op.',[
+    ['Je gooit de bal meteen ver uit naar links.',['b',10,65]],
+    ['De buitenspeler neemt aan en gaat ervandoor.',['t',10,64,14,46]],
+    ['Hij geeft voor op de spits. Kans!',['b',32,30],['t',34,60,32,30]]]],
+  ['pass',32,96,'De bal vasthouden en rustig laten uitzakken','r','Veilig, en je team krijgt rust. Maar je geeft de tegenstander tijd om terug te lopen. De kans op een counter is weg.',[
+    ['Je houdt de bal vast. Iedereen loopt terug.',['o',30,90,30,62],['o',38,88,40,60],['o',22,86,22,58],['o',44,84,46,58]],
+    ['De tegenstander staat weer goed. Geen counter meer mogelijk.']]],
+  ['pass',26,92,'Kort op de centrale verdediger, vlak bij twee tegenstanders','f','Er staan tegenstanders vlakbij. Die zetten meteen druk en veroveren de bal voor jouw goal.',[
+    ['Je rolt de bal naar je verdediger.',['b',26,92],['o',30,90,27,91],['o',22,86,25,89]],
+    ['Hij wordt ingesloten en verliest de bal.',['b',27.6,91.6],['o',27,91,27.5,91.5]],
+    ['Schot. Gevaarlijk!',['b',36,105]]]]
+ ]);
+S('gk','verdedigen','Voorzet','Een tegenstander gaat voorzetten vanaf rechts. Waar ga jij staan?',
+ {ball:[60,90], me:[34,102], t:[[30,94,'cv'],[40,94,'cv'],[52,90,'back']], o:[[60,90,'wing'],[36,92,'st'],[28,96,'st']]},
+ [['run',38,100,'Een paar meter voor de lijn, iets naar de eerste paal','g','Vanaf hier dek je de korte hoek af en kun je nog naar voren om de bal te plukken.',[
+    ['Jij stapt naar voren en naar de eerste paal.',['m',38,100]],
+    ['De voorzet komt. Jij komt uit en vangt de bal.',['b',37,96],['m',37,96.5],['o',36,92,36,94]]]],
+  ['run',30,103,'Bij de tweede paal','f','De eerste paal staat open. Een harde voorzet of een schot in de korte hoek gaat erin.',[
+    ['Jij gaat naar de tweede paal.',['m',30,103]],
+    ['De buitenspeler schiet in de korte hoek.',['b',37.4,105]]]],
+  ['run',34,103,'Midden op de doellijn','r','Je staat in het midden, maar op de lijn. De spits mag koppen zonder dat jij bij de bal kunt.',[
+    ['Jij blijft midden op de lijn.',['m',34,103]],
+    ['De voorzet komt. De spits kopt.',['b',36,93],['o',36,92,36,93]],
+    ['Jij redt op de lijn, maar het was gevaarlijk.',['b',35,102.5],['m',35,102.5]]]]
+ ]);
+
+/* ---------- CENTRALE VERDEDIGER ---------- */
+S('cv','aanval','Opbouw vanaf de keeper','De keeper heeft de bal. Hun spits staat tussen jou en de andere centrale verdediger. Waar ga jij staan?',
+ {ball:[34,99], me:[26,90], t:[[42,90,'cv'],[8,80,'back'],[34,80,'mid']], o:[[32,88,'st'],[42,82,'st'],[16,70,'wing'],[34,76,'mid']]},
+ [['run',15,95,'Breed uitwaaieren naar de zijkant van de zestien','g','Zo maak je afstand tot de spits. De keeper kan je veilig aanspelen en jij neemt aan met je gezicht naar voren.',[
+    ['Jij loopt breed naar de rand van de zestien.',['m',15,95]],
+    ['De keeper speelt jou aan. De spits is te laat.',['b',15.5,94.5],['o',32,88,23,91]],
+    ['Jij dribbelt vooruit.',['m',16,84]],
+    ['Je speelt de back aan. Opbouw gelukt.',['b',9,74],['t',8,80,9,74]]]],
+  ['run',26,90,'Blijven staan waar je staat','r','Je bent aanspeelbaar, maar dicht bij de spits. De keeper durft je de bal niet te geven en trapt lang.',[
+    ['Jij blijft staan. De spits staat dicht bij je.',['o',32,88,29,89]],
+    ['De keeper durft niet en trapt lang.',['b',32,48]],
+    ['Kopduel. De tegenstander wint de bal.',['o',32,55,32,49]]]],
+  ['run',30,96,'Naar de bal toe komen, vlak voor de keeper','f','Je komt dichter bij de spits en de keeper. Eén spits kan nu jullie allebei onder druk zetten.',[
+    ['Jij komt vlak voor de keeper staan.',['m',30,96]],
+    ['De keeper speelt je in. De spits zit er meteen op.',['b',30,96.5],['o',32,88,31,94]],
+    ['Balverlies vlak voor je eigen goal.',['b',31,95],['o',31,94,31,95.4]],
+    ['Schot!',['b',37,105]]]]
+ ]);
+S('cv','aanval','Met de bal','Jij hebt de bal. Voor je ligt ruimte. Hun spits komt van rechts op je af. Wat doe je?',
+ {ball:[24,84], me:[24,84], t:[[42,88,'cv'],[8,80,'back'],[34,74,'mid6'],[14,60,'wing']], o:[[30,82,'st'],[34,71,'mid'],[14,66,'wing'],[38,64,'mid']]},
+ [['run',21,71,'Indribbelen in de ruimte voor je','g','Door in te dribbelen trek je een tegenstander naar je toe. Daardoor komt een medespeler vrij.',[
+    ['Jij dribbelt de ruimte in.',['m',21,71],['o',14,66,17,68]],
+    ['De middenvelder komt op je af. Nu staat je buitenspeler vrij.',['b',13,58],['t',14,60,13,58]],
+    ['Jullie zijn door de eerste linie heen.',['t',13,58,12,44]]]],
+  ['pass',34,74,'Inspelen op de 6','f','De 6 heeft een tegenstander kort in zijn rug. Die stapt ervoor en onderschept de bal.',[
+    ['Jij speelt de 6 aan.',['b',33.6,73],['o',34,71,33.6,72.6]],
+    ['Hun middenvelder onderschept.',['o',33.6,72.6,30,78]],
+    ['De tegenstander gaat op jullie goal af.',['o',30,78,30,90]]]],
+  ['pass',8,80,'Breed op de linksback','r','Veilig, maar de back staat bij de zijlijn en kan weinig kanten op. De tegenstander zet hem makkelijk vast.',[
+    ['Jij speelt breed naar de back.',['b',8,80],['o',14,66,10,74]],
+    ['De back wordt vastgezet en moet terugspelen.',['b',24,88],['m',24,88]]]]
+ ]);
+S('cv','omschakelen','Balverlies','Balverlies op het middenveld. Hun middenvelder heeft de bal. Hun spits staat tussen jou en de andere centrale verdediger. Wat doe jij?',
+ {ball:[40,58], me:[26,80], us:-6, t:[[42,80,'cv'],[10,78,'back'],[58,78,'back'],[24,64,'mid']], o:[[40,58,'mid'],[34,72,'st'],[52,70,'wing']]},
+ [['run',31,78,'Naar binnen schuiven, dicht bij de spits','g','Je sluit het gat tussen de centrale verdedigers. Als de steekbal komt, ben jij er eerst bij.',[
+    ['Jij schuift naar binnen, naast de spits.',['m',31,78]],
+    ['De steekbal komt. Jij stapt ervoor en pakt de bal.',['b',32,76],['o',34,72,33.5,74.5],['m',32,76.5]],
+    ['Balwinst. Jullie kunnen weer opbouwen.',['m',28,70]]]],
+  ['run',37,63,'Vooruit stappen en druk zetten op de bal','f','Je verlaat de achterlijn. Nu zit er een groot gat in jullie verdediging, en daar loopt de spits in.',[
+    ['Jij stapt uit naar de bal.',['m',37,63]],
+    ['Hij speelt de spits in, in de ruimte waar jij stond.',['b',29,80],['o',34,72,29,79.5]],
+    ['De spits staat alleen voor de keeper.',['o',29,79.5,32,92]],
+    ['Doelpunt.',['b',36,105]]]],
+  ['run',26,80,'Blijven staan op je plek','r','Je houdt de lijn, maar het gat naar de spits is groot. Hij krijgt de bal tussen jullie in.',[
+    ['Jij blijft staan.'],
+    ['De spits krijgt de bal tussen jullie in.',['b',33,77],['o',34,72,33,76.5]],
+    ['Jij grijpt laat in. Hij komt nog tot schieten.',['m',30,84],['o',33,76.5,33,85]],
+    ['Schot naast.',['b',42,106]]]]
+ ]);
+S('cv','omschakelen','Balwinst','Jij onderschept de bal. De tegenstander stond met veel spelers naar voren. Wat doe je?',
+ {ball:[27,78], me:[27,78], t:[[22,64,'mid8'],[42,86,'cv'],[34,56,'st'],[8,74,'back']], o:[[31,75,'st'],[17,70,'wing'],[36,68,'mid'],[14,56,'mid']]},
+ [['pass',22,64,'Snel vooruit inspelen op de vrije middenvelder','g','De tegenstander staat nog niet goed. Een snelle pass vooruit maakt meteen een counter mogelijk.',[
+    ['Jij speelt meteen vooruit.',['b',22,64]],
+    ['De middenvelder draait in en stuurt de spits weg.',['b',30,40],['t',34,56,30,40]],
+    ['De spits gaat alleen op de goal af.',['t',30,40,32,20]]]],
+  ['run',27,63,'Zelf doordribbelen','r','Je komt een stuk vooruit, maar de tegenstander krijgt tijd om terug te lopen.',[
+    ['Jij dribbelt zelf naar voren.',['m',27,64],['o',36,68,32,62],['o',14,56,22,56]],
+    ['De tegenstander staat weer dicht. Je moet breed spelen.',['b',8,70],['t',8,74,8,70]]]],
+  ['pass',34,99,'Terugspelen op de keeper','f','Je speelt achteruit terwijl er vooruit ruimte is. De tegenstander krijgt tijd om terug te komen en zet daarna weer druk.',[
+    ['Jij speelt terug op de keeper.',['b',34,99]],
+    ['De tegenstander zet de druk er weer op.',['o',31,75,31,90],['o',36,68,34,82]]]]
+ ]);
+S('cv','verdedigen','Voorzet','Hun buitenspeler gaat voorzetten vanaf links. Hun spits staat vlak bij jou. Wat doe je?',
+ {ball:[8,86], me:[27,92], t:[[40,92,'cv'],[16,84,'back'],[34,80,'mid6']], o:[[8,86,'wing'],[30,90,'st'],[42,94,'st']]},
+ [['run',31,94,'Tussen de spits en de goal staan, met bal en spits in beeld','g','Zo ben jij als eerste bij de bal en zie je wat de spits doet.',[
+    ['Jij gaat tussen de spits en de goal staan.',['m',31,94]],
+    ['De voorzet komt. Jij springt eerst en kopt weg.',['b',31,93],['o',30,90,31,91]],
+    ['Weggewerkt.',['b',20,70]]]],
+  ['run',27,97,'Een paar meter achter de spits blijven','f','De spits staat voor jou en kan vrij koppen.',[
+    ['Jij blijft achter de spits.',['m',27,97]],
+    ['De voorzet komt. De spits kopt vrij in.',['b',31,91],['o',30,90,31,91]],
+    ['Doelpunt.',['b',33,105]]]],
+  ['run',34,94,'Bij de penaltystip wachten','r','Je staat centraal, maar je houdt de spits niet in de gaten. Hij loopt makkelijk achter je rug weg.',[
+    ['Jij blijft centraal staan.',['m',34,94]],
+    ['De spits loopt naar de eerste paal en kopt.',['o',30,90,26,96],['b',26,96]],
+    ['De keeper redt op het nippertje.',['b',24,105]]]]
+ ]);
+S('cv','verdedigen','Spits met rug naar goal','Hun spits krijgt de bal met zijn rug naar jullie goal. Jij staat achter hem. Wat doe je?',
+ {ball:[32,79], me:[32,84], t:[[44,84,'cv'],[34,70,'mid6'],[12,84,'back']], o:[[32,79,'st'],[40,72,'mid'],[24,70,'mid']]},
+ [['run',32,81.5,'Kort in zijn rug staan, zodat hij niet kan draaien','g','Hij kan niet draaien en moet terugspelen. Jij blijft op de been.',[
+    ['Jij gaat kort in zijn rug staan.',['m',32,81.5]],
+    ['Hij kan niet draaien en speelt terug.',['b',40,73],['o',40,72,40,72.5]],
+    ['Gevaar weg.',['m',33,83]]]],
+  ['run',32,80.3,'Er vol in gaan met een sliding','f','Een sliding in de rug is bijna altijd een overtreding. Of hij laat de bal lopen en draait weg.',[
+    ['Jij gaat er vol in.',['m',32,80.3]],
+    ['Hij laat de bal lopen en draait weg.',['o',32,79,28,88]],
+    ['Hij staat vrij voor de keeper.',['b',31,105]]]],
+  ['run',32,89,'Een paar meter afstand houden','r','Hij kan nu wel draaien en de bal doorspelen. Gevaarlijk, maar jij staat nog tussen hem en de goal.',[
+    ['Jij houdt afstand.',['m',32,89]],
+    ['Hij draait rustig en speelt de bal breed.',['b',22,80],['o',24,70,22,80]],
+    ['Gevaarlijk. Jullie back moet ingrijpen.',['t',12,84,19,82]]]]
+ ]);
+
+/* ---------- BACK ---------- */
+S('back','aanval','Opbouw vanaf de keeper','De keeper heeft de bal. Jij staat vlak naast je centrale verdediger. Waar ga je naartoe?',
+ {ball:[34,99], me:[13,90], t:[[26,94,'cv'],[42,94,'cv'],[24,76,'mid'],[34,80,'mid6'],[12,58,'wing']], o:[[26,86,'st'],[42,86,'st'],[16,72,'wing'],[34,72,'mid']]},
+ [['run',4,78,'Hoog en breed, tegen de zijlijn','g','Je maakt het veld groot. Hun buitenspeler kan niet tegelijk jou en je centrale verdediger dekken.',[
+    ['Jij loopt hoog en breed langs de lijn.',['m',4,78]],
+    ['De keeper speelt je aan over de grond.',['b',4.6,78],['o',16,72,10,74]],
+    ['Jij speelt naar binnen. De 8 draait open.',['b',24,75.5],['t',24,76,24,75]]]],
+  ['run',16,92,'Vlak naast de centrale verdediger blijven','f','Jullie staan te dicht bij elkaar. Eén tegenstander kan jullie allebei afschermen.',[
+    ['Jij blijft dicht bij je verdediger.',['m',16,92],['o',26,86,22,89]],
+    ['De keeper speelt jou aan. De spits zit er meteen op.',['b',16,92.6],['o',22,89,17,91]],
+    ['Bal kwijt in jullie eigen zestien.',['o',17,91,24,97]]]],
+  ['run',22,74,'Naar het middenveld lopen','r','Je trekt een tegenstander mee, maar op de vleugel staat nu niemand. De keeper heeft één optie minder.',[
+    ['Jij loopt naar het middenveld.',['m',22,74],['o',16,72,19,72]],
+    ['De keeper kan je niet aanspelen en trapt lang.',['b',32,46]]]]
+ ]);
+S('back','aanval','Met de bal','Jij hebt de bal langs de lijn. Hun buitenspeler komt op je af. Wat doe je?',
+ {ball:[6,74], me:[6,74], t:[[12,56,'wing'],[20,66,'mid'],[26,90,'cv'],[34,74,'mid6']], o:[[12,68,'wing'],[10,58,'back'],[30,66,'mid']]},
+ [['pass',20,66,'Naar binnen spelen op de vrije 8','g','De 8 staat vrij en kan doordraaien. Zo speel je de druk eruit.',[
+    ['Jij speelt naar binnen.',['b',20,66],['o',12,68,8,72]],
+    ['De 8 draait open en kijkt vooruit.',['t',20,66,22,60]],
+    ['Hij speelt de spits aan.',['b',34,46],['t',34,52,34,46]]]],
+  ['pass',11,58,'Langs de lijn op de buitenspeler','f','Hun back staat kort bij jullie buitenspeler en stapt ervoor. Balverlies op de plek waar jij net vandaan kwam.',[
+    ['Jij speelt langs de lijn.',['b',10.6,58],['o',10,58,10.4,58]],
+    ['Hun back onderschept en gaat in jouw rug.',['o',10.4,58,8,76]]]],
+  ['pass',33,46,'Lange bal naar de spits','r','Je komt onder de druk uit, maar de lange bal is vaak voor de tegenstander.',[
+    ['Jij trapt lang.',['b',33,46]],
+    ['Kopduel. De bal valt bij de tegenstander.',['b',38,52],['o',38,50,38,51.5]]]]
+ ]);
+S('back','omschakelen','Balverlies','Jij stond hoog mee in de aanval. Op het middenveld gaat de bal verloren. Hun buitenspeler staat achter jou. Wat doe je?',
+ {ball:[36,56], me:[8,58], t:[[26,80,'cv'],[42,80,'cv'],[58,78,'back'],[34,70,'mid6']], o:[[36,56,'mid'],[12,70,'wing'],[30,62,'mid']]},
+ [['run',11,79,'Meteen terugsprinten naar je eigen plek','g','Hun buitenspeler staat vrij in jouw rug. Door direct terug te sprinten ben je op tijd.',[
+    ['Jij sprint direct terug.',['m',11,79]],
+    ['De bal gaat naar de buitenspeler. Jij bent er al.',['b',12,72],['o',12,70,12,72],['m',12,75.5]],
+    ['Hij kan niet meer door. Jullie staan weer goed.']]],
+  ['run',31,58,'Naar binnen gaan en druk zetten op de bal','f','Er staat al een medespeler bij de bal. Jouw kant staat nu helemaal open.',[
+    ['Jij gaat naar binnen voor de bal.',['m',31,58]],
+    ['De bal gaat over je heen naar de buitenspeler.',['b',12,72],['o',12,70,12,72]],
+    ['Hij heeft de hele vleugel voor zich.',['o',12,72,14,90]],
+    ['Gevaarlijke voorzet.',['b',32,94]]]],
+  ['run',18,70,'Half terug, naar het midden','r','Je bent dichter bij je goal, maar niet op je eigen plek. De buitenspeler heeft nog ruimte.',[
+    ['Jij loopt half terug.',['m',18,70]],
+    ['De bal gaat naar de buitenspeler.',['b',12,72],['o',12,70,12,72]],
+    ['Jij grijpt laat in. Hij geeft nog voor.',['m',14,80],['o',12,72,10,84]],
+    ['Voorzet net te ver.',['b',52,100]]]]
+ ]);
+S('back','omschakelen','Balwinst','Jullie centrale verdediger verovert de bal. De tegenstander stond hoog. Wat doe jij?',
+ {ball:[26,84], me:[10,86], t:[[26,84,'cv'],[34,74,'mid6'],[34,56,'st']], o:[[30,80,'st'],[20,74,'mid'],[40,72,'mid'],[16,70,'wing'],[12,36,'back']]},
+ [['run',5,62,'Diep sprinten langs de zijlijn','g','De tegenstander staat nog hoog. Langs de lijn ligt veel ruimte. Daar zet je de counter op.',[
+    ['Jij sprint langs de lijn.',['m',5,62]],
+    ['Je verdediger speelt de bal in de ruimte voor je.',['b',6,55],['m',6,55]],
+    ['Jij geeft voor. Kans voor de spits!',['b',32,26],['t',34,56,32,26]]]],
+  ['run',14,82,'Kort komen om de bal te vragen','r','Je bent aanspeelbaar, maar de bal gaat nauwelijks vooruit. De tegenstander kan terugkomen.',[
+    ['Jij komt kort.',['m',14,82]],
+    ['Je krijgt de bal, maar voor je staat al een tegenstander.',['b',14,82],['o',16,70,14,77]]]],
+  ['run',10,86,'Blijven staan','f','Er is geen aanspeelpunt vooruit. Je verdediger moet de bal lang wegtrappen.',[
+    ['Jij blijft staan.'],
+    ['Je verdediger ziet niemand en trapt lang.',['b',40,42]],
+    ['Bal weer kwijt.',['o',40,46,40,43]]]]
+ ]);
+S('back','verdedigen','Eén tegen één','Hun buitenspeler komt met de bal op je af. Wat doe je?',
+ {ball:[8,74], me:[10,84], t:[[26,88,'cv'],[20,72,'mid']], o:[[8,74,'wing'],[30,86,'st']]},
+ [['run',11,80,'Afstand houden en hem naar de zijlijn sturen','g','Je staat schuin aan de binnenkant. Hij kan alleen nog langs de lijn, ver van jullie goal.',[
+    ['Jij gaat schuin aan de binnenkant staan.',['m',11,80]],
+    ['Hij moet naar buiten. Jij loopt mee.',['o',8,74,4,82],['m',7,84]],
+    ['Jij werkt de bal over de zijlijn.',['b',-1,86],['m',4,85]]]],
+  ['run',8,76,'Snel inkomen en tackelen','r','Soms win je de bal. Maar mis je, dan is hij voorbij en staat jouw kant open.',[
+    ['Jij gaat snel in voor de tackle.',['m',8,76]],
+    ['Hij tikt de bal langs je.',['o',8,74,12,86],['m',9,78]],
+    ['Hij geeft voor op de spits.',['b',30,92],['o',30,86,30,92]]]],
+  ['run',6,82,'Aan de buitenkant staan','f','De weg naar binnen is open. Hij snijdt naar binnen en kan schieten.',[
+    ['Jij gaat aan de buitenkant staan.',['m',6,82]],
+    ['Hij snijdt naar binnen.',['o',8,74,18,82]],
+    ['Schot op goal.',['b',36,105]]]]
+ ]);
+S('back','verdedigen','Bal aan de andere kant','De bal is aan de andere kant van het veld. Jij staat helemaal breed. Waar ga je staan?',
+ {ball:[60,70], me:[4,80], t:[[26,88,'cv'],[42,88,'cv'],[58,84,'back'],[20,72,'mid'],[48,72,'mid']], o:[[60,70,'wing'],[8,70,'wing'],[34,80,'st']]},
+ [['run',17,86,'Naar binnen schuiven, dichter bij je centrale verdediger','g','De bal is ver weg. Jullie moeten het midden dicht houden. Een lange bal naar jouw kant duurt lang genoeg om terug te stappen.',[
+    ['Jij schuift naar binnen.',['m',17,86]],
+    ['Hun spits loopt het gat in, maar jij staat er.',['o',34,80,22,88]],
+    ['De voorzet komt. Jij kopt weg.',['b',20,88],['m',20,88.5]]]],
+  ['run',4,80,'Breed blijven bij hun buitenspeler','r','Je dekt je man, maar tussen jou en je centrale verdediger zit een groot gat.',[
+    ['Jij blijft breed.'],
+    ['Hun spits loopt het gat in en krijgt de voorzet.',['o',34,80,20,90],['b',20,90]],
+    ['Hij kopt op goal. De keeper redt.',['b',31,103]]]],
+  ['run',44,78,'Meelopen naar de bal','f','Er staan al genoeg spelers bij de bal. Nu is jouw kant leeg.',[
+    ['Jij loopt naar de bal.',['m',44,78]],
+    ['De bal gaat naar de andere kant.',['b',8,71],['o',8,70,8,71]],
+    ['Hun buitenspeler heeft alle ruimte.',['o',8,71,14,92]],
+    ['Schot.',['b',33,105]]]]
+ ]);
+
+/* ---------- CONTROLEUR (6) ---------- */
+S('mid6','aanval','Aanbieden','Je centrale verdediger heeft de bal. Hun 10 staat kort in jouw rug. Waar ga je staan?',
+ {ball:[24,90], me:[34,74], t:[[24,90,'cv'],[44,90,'cv'],[8,82,'back'],[60,82,'back']], o:[[30,84,'st'],[34,71,'mid'],[18,70,'wing'],[48,70,'wing']]},
+ [['run',24,78,'Schuin aanbieden, in het gat naast hun spits','g','Je loopt weg bij de 10. De verdediger kan je aanspelen en jij kunt open aannemen.',[
+    ['Jij loopt schuin weg naar links.',['m',24,78],['o',34,71,30,73]],
+    ['De verdediger speelt je aan. Jij neemt open aan.',['b',24.5,78]],
+    ['Jij draait in en speelt vooruit.',['b',12,60],['t',12,58,12,60]]]],
+  ['run',34,91,'Uitzakken tussen de centrale verdedigers','r','Veilig en aanspeelbaar. Maar je staat nu naast je verdedigers en op het middenveld staat niemand meer.',[
+    ['Jij zakt uit tussen je verdedigers.',['m',34,91]],
+    ['Je krijgt de bal, maar vooruit is niemand vrij.',['b',34,91],['o',34,71,34,82]],
+    ['Jullie moeten breed spelen.',['b',44,90]]]],
+  ['run',34,74,'Blijven staan, met hun 10 in je rug','f','Je krijgt de bal met een tegenstander kort in je rug. Hij pakt hem af, midden voor jullie goal.',[
+    ['Jij blijft staan. De verdediger speelt je aan.',['b',34,75]],
+    ['Hun 10 zit in je rug en pakt de bal af.',['o',34,71,34,75.4]],
+    ['Counter voor de tegenstander.',['o',34,75.4,30,88]]]]
+ ]);
+S('mid6','aanval','Druk in je rug','Jij krijgt de bal met je rug naar voren. Er zit een tegenstander kort in je rug. Wat doe je?',
+ {ball:[34,76], me:[34,76], t:[[26,90,'cv'],[44,90,'cv'],[20,68,'mid'],[48,68,'mid'],[34,56,'st']], o:[[34,73,'mid'],[26,62,'mid'],[42,62,'mid'],[30,84,'st']]},
+ [['pass',44,90,'In één keer kaatsen naar de vrije centrale verdediger','g','Met iemand kort in je rug is draaien gevaarlijk. In één keer spelen naar de vrije man houdt de bal veilig.',[
+    ['Jij kaatst in één keer op de rechter verdediger.',['b',44,90]],
+    ['Die staat vrij en kan vooruit.',['t',44,90,46,78]],
+    ['Jullie zijn eruit.',['b',48,68]]]],
+  ['run',30,68,'Draaien en zelf vooruit dribbelen','f','De tegenstander zit te kort in je rug. Bij het draaien pakt hij de bal af, midden voor jullie goal.',[
+    ['Jij probeert te draaien.',['m',33,74.5],['o',34,73,33.4,74]],
+    ['Hij pakt de bal af tijdens het draaien.',['o',33.4,74,32,84]],
+    ['Schot.',['b',36,105]]]],
+  ['pass',34,46,'Lange bal over iedereen heen','r','Je speelt de druk eruit, maar de lange bal is vaak voor de tegenstander.',[
+    ['Jij trapt de bal lang naar voren.',['b',34,46]],
+    ['Hun verdediger kopt de bal terug. Balverlies.',['b',26,63],['o',26,62,26,62.6]]]]
+ ]);
+S('mid6','omschakelen','Balverlies','Je ploeggenoot verliest de bal vlak bij jou. Wat doe je?',
+ {ball:[20,60], me:[34,68], t:[[20,64,'mid'],[48,62,'mid'],[26,86,'cv'],[42,86,'cv']], o:[[20,60,'mid'],[30,52,'mid'],[10,52,'wing']]},
+ [['run',23,61,'Direct druk zetten op de bal','g','Na balverlies is de tegenstander even niet georganiseerd. Snel met twee man druk zetten levert vaak meteen balwinst op.',[
+    ['Jij zet direct druk.',['m',23,61],['t',20,64,19,62.5]],
+    ['Hij zit klem tussen jullie en verliest de bal.',['b',22,62],['m',22,62.3]],
+    ['Balwinst!',['m',27,54]]]],
+  ['run',34,82,'Snel terugzakken voor de verdediging','r','Veilig, maar de tegenstander krijgt tijd om rustig op te bouwen.',[
+    ['Jij zakt terug.',['m',34,82]],
+    ['De tegenstander speelt rustig breed en bouwt op.',['b',10,52.5],['o',10,52,10,52.5]]]],
+  ['run',34,68,'Blijven staan','f','Je doet niets. De tegenstander dribbelt makkelijk weg uit de druk.',[
+    ['Jij blijft staan.'],
+    ['Hij dribbelt weg en speelt vooruit.',['o',20,60,28,64]],
+    ['Hun spits krijgt de bal in de ruimte.',['b',36,80],['o',36,74,36,80]]]]
+ ]);
+S('mid6','omschakelen','Balwinst','Jij verovert de bal. De tegenstander staat nog niet goed. Wat doe je?',
+ {ball:[34,72], me:[34,72], t:[[12,52,'wing'],[34,52,'st'],[22,66,'mid'],[48,64,'mid'],[26,86,'cv']], o:[[38,76,'st'],[24,78,'st'],[31,66,'mid'],[37,66,'mid'],[46,52,'mid'],[22,52,'mid']]},
+ [['pass',34,52,'Direct vooruit spelen op de spits','g','Snel vooruit spelen voordat de tegenstander terug is. Zo maak je een kans.',[
+    ['Jij speelt meteen vooruit, door de linie heen.',['b',34,52]],
+    ['De spits legt af op de buitenspeler.',['b',14,46],['t',12,52,14,46]],
+    ['Voorzet. Kans!',['b',32,22],['t',34,52,32,22]]]],
+  ['pass',26,86,'Terugspelen naar de verdediging','r','Veilig, maar de kans op een snelle aanval is weg.',[
+    ['Jij speelt terug.',['b',26,86]],
+    ['De tegenstander loopt terug en staat weer goed.',['o',46,52,44,46],['o',22,52,22,46],['o',31,66,30,58],['o',37,66,38,58]]]],
+  ['run',34,67.5,'Zelf dribbelen, recht op twee tegenstanders af','f','Je loopt vast tussen twee man. Ze sluiten je in en pakken de bal af.',[
+    ['Jij dribbelt recht op twee tegenstanders af.',['m',34,67.5],['o',31,66,32.6,67],['o',37,66,35.4,67]],
+    ['Ze sluiten je in en pakken de bal af.',['b',32.8,67.3]],
+    ['Counter voor de tegenstander.',['o',32.6,67,30,80]]]]
+ ]);
+S('mid6','verdedigen','Speler tussen de linies','De tegenstander heeft de bal op het middenveld. Hun 10 staat tussen jou en je verdediging. Wat doe je?',
+ {ball:[40,50], me:[34,64], t:[[26,84,'cv'],[42,84,'cv'],[20,64,'mid'],[48,64,'mid'],[10,82,'back'],[58,82,'back']], o:[[40,50,'mid'],[34,72,'mid'],[20,52,'wing'],[28,70,'st']]},
+ [['run',36,69,'Terug, voor hun 10 gaan staan','g','Zo sluit je de pass tussen de linies af. De tegenstander moet breed spelen.',[
+    ['Jij zakt in voor hun 10.',['m',36,69]],
+    ['De pass naar de 10 kan niet. Ze moeten breed.',['b',20,52.5],['o',20,52,20,52.5]]]],
+  ['run',39,54,'Druk zetten op de balbezitter','f','Je laat hun 10 vrij in je rug. Eén pass en hij staat voor je verdediging.',[
+    ['Jij stapt uit naar de bal.',['m',39,54]],
+    ['Hij speelt langs je op hun 10.',['b',34,71.5],['o',34,72,34,71.5]],
+    ['De 10 draait en stuurt de spits weg.',['b',28,90],['o',28,70,28,90]],
+    ['Kans voor de tegenstander.',['b',33,105]]]],
+  ['run',22,62,'Naar de zijkant om de buitenspeler te helpen','r','Je helpt aan de kant, maar het midden staat open.',[
+    ['Jij gaat naar de zijkant.',['m',22,62]],
+    ['De pass gaat door het midden naar hun 10.',['b',34,71.5],['o',34,72,34,71.5]],
+    ['Je verdediger moet uitstappen. Net op tijd.',['t',42,84,35,74]]]]
+ ]);
+
+/* ---------- MIDDENVELDER (8 / 10) ---------- */
+S('mid8','aanval','Vrijlopen','Je centrale verdediger heeft de bal. Er staat een tegenstander kort bij jou. Waar ga je naartoe?',
+ {ball:[26,88], me:[20,72], t:[[26,88,'cv'],[42,88,'cv'],[34,78,'mid6'],[8,80,'back'],[12,58,'wing'],[34,56,'st']], o:[[30,82,'st'],[20,68,'mid'],[14,76,'wing'],[34,64,'mid'],[24,52,'cv'],[40,52,'cv']]},
+ [['run',26,61,'Weglopen naar de ruimte tussen hun middenveld en verdediging','g','Tussen de linies heeft niemand jou. Als de verdediger je vindt, kun je meteen draaien.',[
+    ['Jij loopt weg naar de ruimte tussen de linies.',['m',26,61]],
+    ['De verdediger speelt je aan, langs het middenveld.',['b',26,61.6]],
+    ['Jij draait en stuurt de spits weg.',['b',30,38],['t',34,56,30,38]]]],
+  ['run',22,80,'Naar de bal toe komen','r','Je bent aanspeelbaar, maar de tegenstander loopt met je mee. Je krijgt de bal met je rug naar voren.',[
+    ['Jij komt naar de bal.',['m',22,80],['o',20,68,21,77]],
+    ['Je krijgt de bal, maar moet terugspelen.',['b',22,80.6]],
+    ['Terug naar de verdediger.',['b',26,88]]]],
+  ['run',20,72,'Blijven staan','f','De tegenstander staat tussen jou en de bal. Je bent niet aanspeelbaar.',[
+    ['Jij blijft staan.'],
+    ['De spits zet druk. De verdediger vindt niemand.',['o',30,82,27.5,86.5]],
+    ['Hij moet lang trappen. Bal weg.',['b',40,40]]]]
+ ]);
+S('mid8','omschakelen','Balverlies','Jij verliest de bal op het middenveld. Wat doe je meteen?',
+ {ball:[21,57], me:[20,60], t:[[34,66,'mid'],[10,60,'wing'],[26,84,'cv'],[42,84,'cv'],[34,50,'st']], o:[[21,56.5,'mid'],[30,48,'mid'],[12,48,'wing']]},
+ [['run',21,58.5,'Direct tegendruk: zelf de bal terugveroveren','g','Je bent het dichtst bij. Meteen terugjagen geeft de tegenstander geen tijd.',[
+    ['Jij jaagt meteen terug.',['m',21,58.2],['t',34,66,25,59]],
+    ['Jij verovert de bal terug.',['m',22,55]],
+    ['Jij speelt meteen vooruit.',['b',32,42],['t',34,50,32,42]]]],
+  ['run',20,60,'Even balen en blijven staan','f','Na balverlies telt elke seconde. De tegenstander dribbelt makkelijk weg.',[
+    ['Jij blijft staan.'],
+    ['Hij dribbelt weg en speelt vooruit.',['o',21,56.5,26,66]],
+    ['De tegenstander gaat op jullie goal af.',['o',26,66,30,80]]]],
+  ['run',22,74,'Terugsprinten naar je positie','r','Je helpt de verdediging, maar je laat de kans liggen om de bal snel terug te winnen.',[
+    ['Jij sprint terug.',['m',22,74]],
+    ['De tegenstander heeft tijd en speelt breed.',['b',12,48.5],['o',12,48,12,48.5]]]]
+ ]);
+S('mid8','omschakelen','Balwinst','Jullie 6 verovert de bal. Voor jou ligt veel ruimte. Wat doe je?',
+ {ball:[34,74], me:[20,72], t:[[34,74,'mid6'],[12,60,'wing'],[34,56,'st'],[48,70,'mid']], o:[[37,77,'st'],[29,77,'st'],[44,66,'mid'],[30,46,'cv'],[40,46,'cv']]},
+ [['run',22,54,'De ruimte in sprinten, richting goal','g','Je geeft de 6 een pass vooruit. Met snelheid ben je voorbij het middenveld van de tegenstander.',[
+    ['Jij sprint de ruimte in.',['m',22,54]],
+    ['De 6 speelt je in de loop aan.',['b',23,52],['m',23,52]],
+    ['Jij gaat op de goal af.',['m',25,34]],
+    ['Schot!',['b',32,-1]]]],
+  ['run',25,76,'Kort komen voor de bal','r','Je bent een optie, maar de bal gaat niet vooruit. De tegenstander kan terug.',[
+    ['Jij komt kort.',['m',25,76]],
+    ['De 6 speelt je aan. De tegenstander loopt terug.',['b',25,76.6],['o',44,66,44,54]]]],
+  ['run',20,72,'Blijven staan','f','Niemand loopt diep. De 6 heeft geen opties vooruit en wordt ingesloten.',[
+    ['Jij blijft staan.'],
+    ['De 6 ziet niemand en wordt ingesloten.',['o',37,77,35.2,75],['o',29,77,32.8,75.5]],
+    ['Bal kwijt.',['b',35,75.2]],
+    ['Counter voor de tegenstander.',['o',35.2,75,34,88]]]]
+ ]);
+S('mid8','verdedigen','Druk zetten','Hun middenvelder heeft de bal en komt op je af. Wat doe je?',
+ {ball:[20,56], me:[22,64], t:[[34,70,'mid6'],[10,80,'back'],[26,86,'cv']], o:[[20,56,'mid'],[8,60,'wing'],[32,74,'st']]},
+ [['run',22,59.5,'Druk zetten en de weg naar het midden afsluiten','g','Zo kan hij alleen nog naar de kant. Daar is het makkelijker om de bal te winnen.',[
+    ['Jij zet druk aan de binnenkant.',['m',22,59.5]],
+    ['Hij moet naar de zijkant spelen.',['b',8,60.5],['o',8,60,8,60.5]],
+    ['Je back stapt in. Balwinst.',['t',10,80,8.6,63],['o',8,60.5,7,61.5]]]],
+  ['run',21,57,'Er vol in gaan voor de bal','f','Hij is je te snel af. Nu ben jij uitgespeeld en staat het midden open.',[
+    ['Jij gaat er vol in.',['m',21,57]],
+    ['Hij tikt de bal langs je.',['o',20,56,26,66]],
+    ['Hij heeft ruimte en speelt de spits aan.',['b',32,80],['o',32,74,32,80]]]],
+  ['run',22,68,'Afwachten en achteruit lopen','r','Je blijft tussen hem en de goal, maar hij krijgt tijd om rustig te kiezen.',[
+    ['Jij loopt achteruit.',['m',22,68],['o',20,56,22,62]],
+    ['Hij heeft tijd en geeft een steekbal.',['b',32,82],['o',32,74,32,82]],
+    ['Je verdediger is er net op tijd.',['t',26,86,31,83]]]]
+ ]);
+
+/* ---------- BUITENSPELER ---------- */
+S('wing','aanval','Vrijlopen','Jullie back heeft de bal. Hun back staat kort bij jou. Wat doe je?',
+ {ball:[8,82], me:[12,58], t:[[8,82,'back'],[26,90,'cv'],[20,72,'mid'],[34,56,'st']], o:[[13,61,'back'],[12,74,'wing'],[26,54,'cv'],[34,64,'mid']]},
+ [['run',7,44,'Diep lopen, in de rug van hun back','g','Hun back staat kort. Als jij diep gaat, ligt er veel ruimte achter hem.',[
+    ['Jij sprint diep langs de lijn.',['m',7,44],['o',13,61,10,52]],
+    ['De back speelt de bal over de tegenstander heen.',['b',7,43]],
+    ['Jij geeft voor. Kans voor de spits!',['b',32,24],['t',34,56,32,24]]]],
+  ['run',10,68,'Kort komen voor de bal','r','Je bent aanspeelbaar, maar hun back gaat mee en zit in je rug.',[
+    ['Jij komt kort.',['m',10,68],['o',13,61,11,65]],
+    ['Je krijgt de bal met je rug naar voren en moet terugspelen.',['b',10,68.6]],
+    ['Terug naar de back.',['b',8,82]]]],
+  ['run',26,58,'Naar het midden lopen','f','In het midden is het druk en jouw vleugel is nu leeg. De back heeft niemand om aan te spelen.',[
+    ['Jij loopt naar binnen.',['m',26,58]],
+    ['De back vindt niemand. Hun buitenspeler zet druk.',['o',12,74,9,80]],
+    ['Hij pakt de bal af.',['b',9,80.6]]]]
+ ]);
+S('wing','aanval','Eén tegen één','Jij hebt de bal op de vleugel, één tegen één met hun back. Je spits staat in de zestien. Wat doe je?',
+ {ball:[8,40], me:[8,40], t:[[34,22,'st'],[20,46,'mid'],[24,30,'mid']], o:[[12,36,'back'],[22,34,'mid'],[36,20,'cv'],[28,18,'cv'],[40,30,'mid']]},
+ [['run',5,26,'Doordribbelen langs de lijn en voorzetten','g','Je gebruikt de ruimte langs de lijn. Een lage voorzet voor de goal is heel gevaarlijk.',[
+    ['Jij gaat langs de lijn.',['m',5,26],['o',12,36,8,30]],
+    ['Jij geeft een lage voorzet.',['b',30,10],['t',34,22,30,10]],
+    ['De spits tikt binnen!',['b',33,-1]]]],
+  ['run',16,37,'Naar binnen dribbelen, tussen twee tegenstanders','f','Naar binnen staan meer tegenstanders. Daar loop je vast en verlies je de bal.',[
+    ['Jij dribbelt naar binnen.',['m',16,37],['o',12,36,14.4,36.2],['o',22,34,17.8,36]],
+    ['Ze sluiten je in en pakken de bal af.',['b',17.6,36.4]],
+    ['Counter voor de tegenstander.',['o',17.8,36,24,56]]]],
+  ['pass',20,46,'Terugspelen naar de middenvelder','r','Veilig, maar je laat een kans liggen. De tegenstander krijgt tijd om terug te komen.',[
+    ['Jij speelt terug.',['b',20,46]],
+    ['De tegenstander schuift dicht.',['o',12,36,15,42],['o',40,30,32,34]]]]
+ ]);
+S('wing','omschakelen','Balverlies','De bal gaat verloren aan de andere kant. Jij staat hoog op links. Wat doe je?',
+ {ball:[54,40], me:[10,40], t:[[34,30,'st'],[50,44,'mid'],[10,80,'back'],[26,84,'cv']], o:[[54,40,'back'],[8,52,'back'],[30,56,'mid']]},
+ [['run',16,54,'Terug en naar binnen schuiven','g','Je helpt je team compact te staan. Een lange bal naar jouw kant kun je onderscheppen.',[
+    ['Jij loopt terug en schuift naar binnen.',['m',16,54]],
+    ['De tegenstander probeert de bal naar jouw kant.',['b',12,54],['o',8,52,9.5,53],['m',12,54.4]],
+    ['Jij onderschept!',['m',18,48]]]],
+  ['run',10,40,'Hoog blijven staan voor de counter','f','Je team staat met een man minder. De tegenstander speelt makkelijk naar jouw kant.',[
+    ['Jij blijft hoog staan.'],
+    ['De bal gaat naar hun vrije speler op jouw kant.',['b',8,54],['o',8,52,8,54]],
+    ['Hij dribbelt vrij op jullie back af.',['o',8,54,10,74]]]],
+  ['run',44,42,'Naar de bal sprinten','r','Je zet druk, maar je komt van ver en jouw kant staat open.',[
+    ['Jij sprint naar de bal.',['m',44,42]],
+    ['Ze spelen de bal snel naar jouw kant.',['b',8,54],['o',8,52,8,54]],
+    ['Jullie back moet het alleen oplossen.',['t',10,80,9,64]]]]
+ ]);
+S('wing','omschakelen','Balwinst','Jullie verdediger verovert de bal. De tegenstander stond hoog. Wat doe je?',
+ {ball:[28,82], me:[12,66], t:[[28,82,'cv'],[34,58,'st'],[20,74,'mid']], o:[[31,78,'st'],[22,86,'wing'],[40,74,'mid'],[16,28,'back'],[34,44,'cv']]},
+ [['run',8,46,'Direct diep sprinten langs de lijn','g','De tegenstander staat nog hoog. Langs de lijn heb je alle ruimte voor een counter.',[
+    ['Jij sprint direct diep.',['m',8,46]],
+    ['De verdediger speelt de bal in de ruimte voor je.',['b',8,44],['m',8,44]],
+    ['Jij gaat op de goal af.',['m',12,28],['o',16,28,14,30]],
+    ['Voorzet. Kans!',['b',32,20],['t',34,58,32,21]]]],
+  ['run',13,74,'Kort komen','r','Je bent aanspeelbaar, maar de bal gaat nauwelijks vooruit. De tegenstander loopt terug.',[
+    ['Jij komt kort.',['m',13,74]],
+    ['Je krijgt de bal, maar de tegenstander staat alweer.',['b',13,74.6],['o',40,74,30,64]]]],
+  ['run',30,64,'Naar het midden lopen','f','Daar staat je spits al. Jullie lopen elkaar in de weg en de vleugel is leeg.',[
+    ['Jij loopt naar het midden.',['m',30,64]],
+    ['De verdediger ziet geen vrije man en trapt lang.',['b',34,36]],
+    ['Bal kwijt.',['o',34,44,34,37]]]]
+ ]);
+S('wing','verdedigen','Druk zetten','Hun back heeft de bal langs de lijn. Hun middenvelder staat naar binnen vrij. Wat doe je?',
+ {ball:[6,42], me:[14,50], t:[[34,56,'st'],[20,72,'mid'],[10,82,'back']], o:[[6,42,'back'],[22,38,'mid'],[8,60,'wing'],[30,62,'st']]},
+ [['run',10,45,'Druk zetten van binnen naar buiten','g','Je sluit de pass naar binnen af. Hij kan alleen nog langs de lijn.',[
+    ['Jij zet druk van binnenuit.',['m',10,45]],
+    ['De pass naar binnen kan niet. Hij speelt langs de lijn.',['b',5,62],['o',8,60,5.5,62]],
+    ['Jullie back stapt in en wint de bal.',['t',10,82,6,65],['b',6,65]]]],
+  ['run',14,64,'Terugzakken naar je eigen back','r','Je helpt achterin, maar hun back krijgt alle tijd.',[
+    ['Jij zakt terug.',['m',14,64]],
+    ['Hun back dribbelt rustig op.',['o',6,42,8,54]]]],
+  ['run',14,50,'Blijven staan','f','Hun middenvelder staat vrij. Hij krijgt de bal en kan draaien.',[
+    ['Jij blijft staan.'],
+    ['De bal gaat naar binnen.',['b',22,38.6],['o',22,38,22,38.6]],
+    ['Hij draait en speelt vooruit.',['o',22,38.6,26,56]]]]
+ ]);
+
+/* ---------- SPITS ---------- */
+S('st','aanval','Aanspeelbaar zijn','Jullie verdediger heeft de bal. Jij staat tussen hun twee centrale verdedigers. Waar ga je naartoe?',
+ {ball:[26,88], me:[34,56], t:[[26,88,'cv'],[20,72,'mid'],[48,72,'mid'],[12,58,'wing'],[56,58,'wing']], o:[[28,52,'cv'],[40,52,'cv'],[24,66,'mid'],[44,66,'mid']]},
+ [['run',34,66,'Kort komen tussen hun middenvelders','g','Hun verdedigers durven niet mee. Jij krijgt de bal vrij en kunt kaatsen.',[
+    ['Jij komt kort.',['m',34,66]],
+    ['De verdediger speelt je aan.',['b',34,66.6]],
+    ['Jij kaatst op de 8, die vooruit kan.',['b',22,60],['t',20,72,22,60]]]],
+  ['run',30,40,'Meteen diep lopen','r','Goed om de verdediging naar achteren te duwen. Maar de bal is ver weg en een lange bal is moeilijk.',[
+    ['Jij loopt diep.',['m',30,40],['o',28,52,29,42]],
+    ['De lange bal komt. De verdediger is erbij.',['b',29,41.4],['o',29,42,29,41.6]]]],
+  ['run',34,56,'Blijven staan tussen de verdedigers','f','Je staat stil en bent goed gedekt. De verdediger kan je niet aanspelen.',[
+    ['Jij blijft staan.',['o',28,52,31,55],['o',40,52,37,55]],
+    ['Niemand is aanspeelbaar. De verdediger trapt de bal weg.',['b',60,30]]]]
+ ]);
+S('st','aanval','Voorzet','Jullie buitenspeler gaat voorzetten vanaf links. Jij staat in de zestien. Wat doe je?',
+ {ball:[8,22], me:[34,24], t:[[8,22,'wing'],[48,26,'wing'],[22,40,'mid']], o:[[12,20,'back'],[36,20,'cv'],[28,16,'cv']]},
+ [['run',28,9,'Naar de eerste paal sprinten','g','Een sprint naar de eerste paal is lastig te volgen. Jij bent als eerste bij de bal.',[
+    ['Jij sprint naar de eerste paal.',['m',28,9],['o',36,20,32,12]],
+    ['De voorzet komt. Jij tikt hem binnen.',['b',28.5,9]],
+    ['Doelpunt!',['b',33,-1]]]],
+  ['run',34,14,'Op de penaltystip wachten','r','Je staat centraal, maar de verdediger staat voor je en kan de bal wegkoppen.',[
+    ['Jij wacht bij de stip.',['m',34,14],['o',28,16,32,12]],
+    ['De voorzet komt. De verdediger kopt weg.',['b',32,12.4]],
+    ['Weggewerkt.',['b',20,40]]]],
+  ['run',40,26,'Achter de verdediger blijven','f','Je staat achter je man en te ver van de goal. De voorzet gaat voor je langs.',[
+    ['Jij blijft achter de verdediger.',['m',40,26]],
+    ['De voorzet gaat voor je langs.',['b',35,11]],
+    ['De keeper pakt de bal.',['b',34,5],['o',34,3,34,5.4]]]]
+ ]);
+S('st','omschakelen','Balverlies','Jullie verliezen de bal voor hun goal. Hun centrale verdediger heeft de bal. Jij staat vlakbij. Wat doe je?',
+ {ball:[28,28], me:[32,30], t:[[12,40,'wing'],[56,40,'wing'],[34,56,'mid6']], o:[[28,28,'cv'],[42,28,'cv'],[36,40,'mid']]},
+ [['run',30.5,28.5,'Druk zetten en de pass naar de andere verdediger afsluiten','g','Zo kan hij niet kort opbouwen. Hij moet een moeilijke lange bal geven.',[
+    ['Jij zet druk en sluit de pass opzij af.',['m',30.5,28.5]],
+    ['Hij moet lang trappen.',['b',36,56],['t',34,56,36,56]],
+    ['Jullie winnen de bal terug.']]],
+  ['run',33,40,'Even uitrusten en terugwandelen','f','Hun verdediger heeft alle tijd. Hij speelt rustig in en de tegenstander ontsnapt.',[
+    ['Jij loopt rustig terug.',['m',33,40]],
+    ['Hij speelt rustig in op hun 6.',['b',36,40.6],['o',36,40,36,40.6]],
+    ['Ze bouwen rustig op.',['o',36,40.6,36,54]]]],
+  ['run',40,30,'Druk zetten op de andere verdediger','r','Je dekt een optie af, maar de balbezitter krijgt tijd en ruimte.',[
+    ['Jij gaat naar de andere verdediger.',['m',40,30]],
+    ['De balbezitter dribbelt op en speelt vooruit.',['o',28,28,28,38]],
+    ['De druk is weg.',['b',36,44],['o',36,40,36,44]]]]
+ ]);
+S('st','omschakelen','Balwinst','Jullie 6 verovert de bal. Achter hun verdediging ligt veel ruimte. Wat doe je?',
+ {ball:[34,70], me:[34,54], t:[[34,70,'mid6'],[12,58,'wing'],[56,58,'wing']], o:[[34,50,'cv'],[24,50,'cv'],[44,50,'back'],[38,73,'st'],[30,74,'st']]},
+ [['run',27,36,'Schuin diep lopen, in de ruimte achter de verdediging','g','De verdediging staat hoog. Een schuine loopactie is moeilijk te volgen en jij komt alleen voor de keeper.',[
+    ['Jij loopt schuin diep.',['m',27,36],['o',24,50,25,44]],
+    ['De 6 geeft de steekbal.',['b',27,34],['m',27,34]],
+    ['Jij staat alleen voor de keeper.',['m',31,16]],
+    ['Doelpunt!',['b',36,-1]]]],
+  ['run',34,62,'Kort komen voor de bal','r','Je bent aanspeelbaar, maar de verdediger loopt mee en de ruimte achter hem blijft leeg.',[
+    ['Jij komt kort.',['m',34,62],['o',34,50,34,58]],
+    ['Je krijgt de bal met de verdediger in je rug.',['b',34,62.6]]]],
+  ['run',34,54,'Blijven staan','f','Niemand loopt diep. De tegenstander loopt rustig terug.',[
+    ['Jij blijft staan.'],
+    ['De 6 vindt geen opening en wordt ingesloten.',['o',38,73,35.4,71],['o',30,74,32.8,71.4]]]]
+ ]);
+S('st','verdedigen','Druk vooraan','Hun centrale verdediger heeft de bal. Hun 6 staat vlak achter jou. Wat doe je?',
+ {ball:[26,20], me:[34,30], t:[[12,44,'wing'],[56,44,'wing'],[34,48,'mid']], o:[[26,20,'cv'],[42,20,'cv'],[34,32,'mid'],[8,30,'back'],[60,30,'back']]},
+ [['run',29,24,'Druk zetten, met de 6 in je schaduw','g','Je loopt zo aan dat de pass naar de 6 dicht is. Hij moet breed of lang.',[
+    ['Jij zet druk, met de 6 achter je.',['m',29,24]],
+    ['De pass naar de 6 kan niet. Hij speelt breed.',['b',8,30.6],['o',8,30,8,30.6]],
+    ['Jullie buitenspeler zet de back vast.',['t',12,44,10,34]]]],
+  ['run',27.5,22,'Recht op de bal sprinten','f','Je laat de 6 vrij. Hij krijgt de bal en kan draaien.',[
+    ['Jij sprint recht op de bal.',['m',27.5,22]],
+    ['Hij speelt langs je naar de vrije 6.',['b',34,32.6],['o',34,32,34,33]],
+    ['De 6 draait en hun aanval begint.',['o',34,33,34,46]]]],
+  ['run',34,30,'Blijven staan bij de 6','r','Je dekt de 6, maar de verdediger krijgt alle tijd om op te bouwen.',[
+    ['Jij blijft bij de 6.'],
+    ['De verdediger dribbelt op en kiest rustig.',['o',26,20,26,32]]]]
+ ]);
+
+/* ===================== Opslag ===================== */
+const KEY = 'tactiekbord.trainer.v2';
+const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };
+const saveStore = () => { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} };
+let store = load();
+let cfg = Object.assign({ size: 11, form: '4-3-3', pos: 5, phase: 'alles' }, store.cfg || {});
+if (!FORMS[cfg.size] || !FORMS[cfg.size][cfg.form]) cfg = { size: 11, form: '4-3-3', pos: 5, phase: 'alles' };
+if (!FORMS[cfg.size][cfg.form][cfg.pos]) cfg.pos = 1;
+store.best = store.best || {};
+
+/* ===================== Veld & spelers ===================== */
+const SVGNS = 'http://www.w3.org/2000/svg';
+const $ = id => document.getElementById(id);
+const svg = $('pitch'), playersG = $('players'), marksG = $('marks'), trailG = $('trail'), cap = $('caption');
+const el = (tag, attrs, text) => { const n = document.createElementNS(SVGNS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (text != null) n.textContent = text; return n; };
+(function () { const g = $('grass'); for (let i = 0; i < 12; i++) g.appendChild(el('rect', { x: -3, width: 74, y: -3 + i * 9.25, height: 9.26, class: i % 2 ? 'grass-b' : 'grass-a' })); })();
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+let players = [], ball = null, nodes = {}, ballNode = null, mirror = false;
+const M = x => mirror ? 68 - x : x;
+
+function drawPlayers(opts = {}) {
+  playersG.textContent = ''; nodes = {};
+  [...players].sort((a, b) => (a.me ? 1 : 0) - (b.me ? 1 : 0)).forEach(p => {
+    const cls = ['pl', p.team, p.gk ? 'gk' : '', p.dim ? 'dim' : '', opts.pick ? 'pick' : ''].join(' ');
+    const g = el('g', { class: cls, transform: `translate(${p.x} ${p.y})` });
+    if (opts.pick) { g.setAttribute('tabindex', '0'); g.setAttribute('role', 'button'); g.setAttribute('aria-label', p.name); g.dataset.idx = p.idx; }
+    g.appendChild(el('circle', { r: 3.4, fill: 'transparent' }));
+    if (p.me) g.appendChild(el('circle', { class: 'ring', r: 3.6 }));
+    g.appendChild(el('circle', { class: 'disc', r: 2.5 }));
+    if (p.team === 'us') g.appendChild(el('text', { class: 'code', y: 0.65 }, p.code === 'K' ? 'K' : p.code));
+    if (p.me) {
+      const t = el('g', { class: 'tag', transform: 'translate(0 -5.3)' });
+      t.appendChild(el('rect', { x: -2.6, y: -1.35, width: 5.2, height: 2.3, rx: 1.1 }));
+      t.appendChild(el('text', { y: 0.55 }, 'JIJ'));
+      g.appendChild(t);
+    }
+    playersG.appendChild(g); nodes[p.id] = g;
+  });
+  if (ball) {
+    ballNode = el('g', { class: 'ball', transform: `translate(${ball.x + 0.9} ${ball.y - 0.9})` });
+    ballNode.appendChild(el('circle', { class: 'b', r: 1.05 }));
+    ballNode.appendChild(el('circle', { class: 'p', r: 0.38 }));
+    playersG.appendChild(ballNode);
+  } else ballNode = null;
+}
+function place() {
+  players.forEach(p => { const n = nodes[p.id]; if (n) n.setAttribute('transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`); });
+  if (ballNode) ballNode.setAttribute('transform', `translate(${(ball.x + 0.9).toFixed(2)} ${(ball.y - 0.9).toFixed(2)})`);
+}
+
+/* Opstelling-voorbeeld op het setup-scherm */
+function drawSetupPitch() {
+  const form = FORMS[cfg.size][cfg.form];
+  mirror = false; ball = null;
+  players = form.map((p, i) => ({ id: 'u' + i, idx: i, team: 'us', code: p[2], x: p[0], y: p[1], gk: p[2] === 'K', me: i === cfg.pos, name: posName(form, i) }));
+  marksG.textContent = ''; trailG.textContent = ''; cap.hidden = true;
+  drawPlayers({ pick: true });
+  playersG.querySelectorAll('.pick').forEach(n => {
+    const go = () => { cfg.pos = +n.dataset.idx; persistCfg(); drawSetupPitch(); renderSetup(); };
+    n.addEventListener('click', go);
+    n.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+  });
+}
+
+/* Situatie opbouwen */
+function buildScene(sc) {
+  const form = FORMS[cfg.size][cfg.form], base = form[cfg.pos];
+  mirror = base[0] > 36;
+  const st = sc.setup, usShift = st.us || 0;
+  players = form.map((p, i) => ({ id: 'u' + i, team: 'us', code: p[2], group: ROLE[p[2]][0], gk: p[2] === 'K', me: i === cfg.pos,
+    x: p[0], y: p[2] === 'K' ? p[1] : p[1] + usShift, dim: true }));
+  const of = FORMS[cfg.size][OPP_FORM[cfg.size]], sh = OPP_SHIFT[sc.ph];
+  of.forEach((p, i) => players.push({ id: 't' + i, team: 'them', code: p[2], group: ROLE[p[2]][0], gk: p[2] === 'K',
+    x: 68 - p[0], y: p[2] === 'K' ? 3 : 105 - p[1] + sh, dim: true }));
+  const me = players.find(p => p.me); me.x = M(st.me[0]); me.y = st.me[1]; me.dim = false;
+  assign(st.t || [], players.filter(p => p.team === 'us' && !p.me && !p.gk));
+  assign(st.o || [], players.filter(p => p.team === 'them' && !p.gk));
+  ball = { x: M(st.ball[0]), y: st.ball[1] };
+  players.forEach(p => { if (dist(p, ball) < 2.5) p.dim = false; });
+  spread();
+}
+function assign(points, pool) {
+  const used = new Set();
+  const pts = points.map(p => ({ x: M(p[0]), y: p[1], hint: p[2] }));
+  pts.sort((a, b) => (b.hint ? 1 : 0) - (a.hint ? 1 : 0));
+  pts.forEach(pt => {
+    const free = pool.filter(p => !used.has(p));
+    let cand = pt.hint ? free.filter(p => pt.hint === 'mid' ? (p.group === 'mid6' || p.group === 'mid8') : p.group === pt.hint) : [];
+    if (!cand.length) cand = free;
+    if (!cand.length) return;
+    cand.sort((a, b) => dist(a, pt) - dist(b, pt));
+    const p = cand[0]; used.add(p); p.x = pt.x; p.y = pt.y; p.dim = false; p.fixed = true;
+  });
+}
+function spread() {
+  for (let it = 0; it < 6; it++) {
+    players.forEach(p => {
+      if (!p.dim || p.gk) return;
+      [...players, { x: ball.x, y: ball.y }].forEach(q => {
+        if (q === p) return;
+        const d = dist(p, q);
+        if (d < 5) {
+          const dx = d ? (p.x - q.x) / d : 1, dy = d ? (p.y - q.y) / d : 0, push = (5 - d) * 0.6;
+          p.x = clamp(p.x + dx * push, 2, 66); p.y = clamp(p.y + dy * push, 2, 103);
+        }
+      });
+    });
+  }
+}
+
+/* Keuzes tekenen */
+function drawMarks(opts, onPick) {
+  marksG.textContent = '';
+  const me = players.find(p => p.me);
+  opts.forEach(o => {
+    const from = o.kind === 'pass' ? ball : me, tx = M(o.x), ty = o.y;
+    const g = el('g', { class: 'mark ' + o.kind, tabindex: '0', role: 'button', 'aria-label': `Keuze ${o.letter}: ${o.label}` });
+    let bx = tx, by = ty;
+    if (Math.hypot(tx - from.x, ty - from.y) < 2) { bx = tx + 4; by = ty - 4; }
+    else g.appendChild(el('line', { x1: from.x, y1: from.y, x2: tx, y2: ty }));
+    g.appendChild(el('circle', { cx: bx, cy: by, r: 2.2 }));
+    g.appendChild(el('text', { x: bx, y: by + 0.8 }, o.letter));
+    if (onPick) {
+      g.addEventListener('click', () => onPick(o));
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPick(o); } });
+    }
+    marksG.appendChild(g);
+  });
+}
+
+/* ===================== Simulatie ===================== */
+let runId = 0;
+function nearest(team, x, y, exclMe) {
+  let best = null, bd = 1e9;
+  players.forEach(p => { if (p.team !== team || (exclMe && p.me)) return; const d = Math.hypot(p.x - x, p.y - y); if (d < bd) { bd = d; best = p; } });
+  return best;
+}
+function tween(movers, ballMove, follow, dur, id) {
+  return new Promise(res => {
+    const t0 = performance.now();
+    const frame = now => {
+      if (id !== runId) return res(false);
+      const t = Math.min(1, (now - t0) / dur), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      movers.forEach(m => { m.p.x = m.fx + (m.tx - m.fx) * e; m.p.y = m.fy + (m.ty - m.fy) * e; });
+      if (ballMove) { const eb = 1 - Math.pow(1 - t, 2); ball.x = ballMove.fx + (ballMove.tx - ballMove.fx) * eb; ball.y = ballMove.fy + (ballMove.ty - ballMove.fy) * eb; }
+      else if (follow) { ball.x = follow.p.x + follow.ox; ball.y = follow.p.y + follow.oy; }
+      place();
+      t < 1 ? requestAnimationFrame(frame) : res(true);
+    };
+    requestAnimationFrame(frame);
+  });
+}
+async function runSteps(steps) {
+  const id = ++runId;
+  for (const step of steps) {
+    if (id !== runId) return false;
+    const [text, ...acts] = step;
+    cap.textContent = text; cap.hidden = false;
+    const movers = []; let ballMove = null;
+    acts.forEach(a => {
+      if (a[0] === 'b') { ballMove = { fx: ball.x, fy: ball.y, tx: M(a[1]), ty: a[2] }; trailG.appendChild(el('line', { class: 'tb', x1: ball.x, y1: ball.y, x2: M(a[1]), y2: a[2] })); return; }
+      let p, tx, ty;
+      if (a[0] === 'm') { p = players.find(q => q.me); tx = M(a[1]); ty = a[2]; trailG.appendChild(el('line', { class: 'tm', x1: p.x, y1: p.y, x2: tx, y2: ty })); }
+      else { p = nearest(a[0] === 't' ? 'us' : 'them', M(a[1]), a[2], true); tx = M(a[3]); ty = a[4]; }
+      if (!p) return;
+      p.dim = false; if (nodes[p.id]) nodes[p.id].classList.remove('dim');
+      movers.push({ p, fx: p.x, fy: p.y, tx, ty });
+    });
+    let follow = null;
+    if (!ballMove) {
+      const m = movers.find(m => Math.hypot(m.fx - ball.x, m.fy - ball.y) < 1.9);
+      if (m) follow = { p: m.p, ox: ball.x - m.fx, oy: ball.y - m.fy };
+    }
+    let d = 0; movers.forEach(m => d = Math.max(d, Math.hypot(m.tx - m.fx, m.ty - m.fy)));
+    const bd = ballMove ? Math.hypot(ballMove.tx - ballMove.fx, ballMove.ty - ballMove.fy) : 0;
+    let dur = movers.length ? clamp(d * 55, 600, 1500) : clamp(bd * 26, 450, 1100);
+    if (bd && movers.length) dur = Math.max(dur, clamp(bd * 26, 450, 1100));
+    if (reduce) dur = 1;
+    if (movers.length || ballMove) { const ok = await tween(movers, ballMove, follow, dur, id); if (!ok) return false; }
+    await sleep(clamp(text.length * 30, 700, 1700));
+  }
+  return id === runId;
+}
+
+/* ===================== Trainer ===================== */
+const panel = $('panel');
+let session = null;
+const posNow = () => posName(FORMS[cfg.size][cfg.form], cfg.pos);
+const groupNow = () => ROLE[FORMS[cfg.size][cfg.form][cfg.pos][2]][0];
+const poolFor = (g, ph) => SC.filter(s => s.g === g && (ph === 'alles' || s.ph === ph));
+const bestKey = () => [cfg.size, cfg.form, cfg.pos, cfg.phase].join('|');
+function persistCfg() { store.cfg = cfg; saveStore(); }
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+
+function renderSetup() {
+  $('sub').textContent = 'Kies je team, je positie en de fase';
+  const forms = Object.keys(FORMS[cfg.size]);
+  const n = poolFor(groupNow(), cfg.phase).length;
+  const best = store.best[bestKey()];
+  panel.innerHTML = `
+    <section>
+      <h2>1 · Team</h2>
+      <div class="seg" role="group" aria-label="Teamgrootte">
+        <button type="button" data-size="11" aria-pressed="${cfg.size === 11}">11-tal</button>
+        <button type="button" data-size="8" aria-pressed="${cfg.size === 8}">8-tal</button>
+      </div>
+      <label class="muted" for="formSel" style="font-size:.9rem">Opstelling</label>
+      <select id="formSel">${forms.map(f => `<option ${f === cfg.form ? 'selected' : ''}>${f}</option>`).join('')}</select>
+    </section>
+    <section>
+      <h2>2 · Jouw positie</h2>
+      <p class="muted" style="font-size:.9rem">Tik op het veld op jouw plek.</p>
+      <div class="poschip"><span class="dot"></span><span>${esc(posNow())}</span></div>
+    </section>
+    <section>
+      <h2>3 · Fase</h2>
+      <div class="phases">${Object.keys(PHASES).map(k => `
+        <button type="button" class="phase" data-phase="${k}" aria-pressed="${cfg.phase === k}"><b>${PHASES[k][0]}</b><span>${PHASES[k][1]}</span></button>`).join('')}
+      </div>
+    </section>
+    <section>
+      <button type="button" class="btn primary" id="startBtn" ${n ? '' : 'disabled'}>Start training · ${n} situatie${n === 1 ? '' : 's'}</button>
+      ${best != null ? `<p class="best">Beste score op deze positie en fase: ${best}%</p>` : ''}
+    </section>`;
+  panel.querySelectorAll('[data-size]').forEach(b => b.onclick = () => {
+    const s = +b.dataset.size; if (s === cfg.size) return;
+    cfg.size = s; cfg.form = Object.keys(FORMS[s])[0]; cfg.pos = 5 < FORMS[s][cfg.form].length ? 5 : 1;
+    persistCfg(); drawSetupPitch(); renderSetup();
+  });
+  $('formSel').onchange = e => {
+    const oldGroup = groupNow(); cfg.form = e.target.value;
+    const f = FORMS[cfg.size][cfg.form]; let idx = f.findIndex(p => ROLE[p[2]][0] === oldGroup);
+    cfg.pos = idx >= 0 ? idx : 1; persistCfg(); drawSetupPitch(); renderSetup();
+  };
+  panel.querySelectorAll('[data-phase]').forEach(b => b.onclick = () => { cfg.phase = b.dataset.phase; persistCfg(); renderSetup(); });
+  $('startBtn').onclick = startSession;
+}
+
+function startSession() {
+  const list = shuffle(poolFor(groupNow(), cfg.phase));
+  if (cfg.phase === 'alles') { const order = { aanval: 0, omschakelen: 1, verdedigen: 2 }; list.sort((a, b) => order[a.ph] - order[b.ph]); }
+  session = { list, i: 0, results: [], state: 'ask', opts: [], chosen: null };
+  loadScenario();
+}
+function loadScenario() {
+  const sc = session.list[session.i];
+  session.opts = shuffle(sc.opts.map(o => ({ kind: o[0], x: o[1], y: o[2], label: o[3], rate: o[4], why: o[5], steps: o[6] })))
+    .map((o, i) => Object.assign(o, { letter: 'ABC'[i] }));
+  session.state = 'ask'; session.chosen = null; session.watching = null;
+  resetScene(sc);
+  drawMarks(session.opts, choose);
+  renderPlay();
+}
+function resetScene(sc) {
+  runId++;
+  buildScene(sc); trailG.textContent = ''; cap.hidden = true; drawPlayers();
+}
+async function choose(o) {
+  if (session.state !== 'ask') return;
+  session.chosen = o; session.state = 'sim';
+  session.results.push({ sc: session.list[session.i], rate: o.rate });
+  renderPlay();
+  await play(o);
+  if (session && session.chosen === o && session.state === 'sim') { session.state = 'done'; renderPlay(); }
+}
+async function play(o) {
+  const sc = session.list[session.i];
+  resetScene(sc);
+  drawMarks([o]);
+  marksG.style.opacity = '.55';
+  const ok = await runSteps(o.steps);
+  marksG.style.opacity = '';
+  return ok;
+}
+async function watch(o) {
+  if (session.state === 'sim') return;
+  session.state = 'replay'; session.watching = o; renderPlay();
+  await play(o);
+  if (session && session.state === 'replay') { session.state = 'done'; session.watching = null; renderPlay(); }
+}
+
+function renderPlay() {
+  const sc = session.list[session.i], total = session.list.length;
+  const pts = session.results.reduce((s, r) => s + RATE[r.rate][1], 0);
+  $('sub').textContent = posNow();
+  const head = `
+    <div class="topline">
+      <div class="chips"><span class="chip ph">${PHASES[sc.ph][0]}</span><span class="chip">${esc(sc.sub)}</span></div>
+      <span class="progress">${session.i + 1} / ${total} · ${pts} pnt</span>
+    </div>
+    <div class="bar"><i style="width:${(session.i + (session.state === 'ask' ? 0 : 1)) / total * 100}%"></i></div>`;
+  let body = '';
+  if (session.state === 'ask') {
+    body = `
+      <section><h3>${esc(sc.q)}</h3></section>
+      <div class="opts">${session.opts.map(o => `
+        <button type="button" class="opt" data-l="${o.letter}"><span class="letter ${o.kind}">${o.letter}</span>
+          <span><span class="kind">${o.kind === 'pass' ? 'Pass' : 'Loopactie'}</span>${esc(o.label)}</span></button>`).join('')}
+      </div>
+      <p class="muted" style="font-size:.88rem">Tik op een keuze, hier of op het veld. Witte lijn = jij loopt, gele lijn = de bal.</p>
+      <button type="button" class="linkbtn" id="stopBtn">Stoppen en terug naar instellingen</button>`;
+  } else if (session.state === 'sim') {
+    const o = session.chosen;
+    body = `
+      <section><h3>${esc(sc.q)}</h3></section>
+      <div class="opts"><button type="button" class="opt" disabled><span class="letter ${o.kind}">${o.letter}</span><span><span class="kind">Jouw keuze</span>${esc(o.label)}</span></button></div>
+      <div class="running"><span class="pulse"></span>Kijk wat er gebeurt...</div>
+      <button type="button" class="linkbtn" id="skipBtn">Simulatie overslaan</button>`;
+  } else {
+    const o = session.chosen, last = session.i === total - 1;
+    body = `
+      <div class="verdict ${o.rate}">
+        <span class="vt">${RATE[o.rate][0]}</span>
+        <p><b>${o.letter}. ${esc(o.label)}</b></p>
+        <p>${esc(o.why)}</p>
+      </div>
+      <section>
+        <h2>Alle keuzes · bekijk wat er gebeurt</h2>
+        <ul class="all">${session.opts.map(x => `
+          <li><span class="letter ${x.kind}">${x.letter}</span>
+            <span class="lbl">${x === o ? '<span class="mine">Jouw keuze</span>' : ''}${esc(x.label)}</span>
+            <span class="rate ${x.rate}">${RATE[x.rate][0]}</span>
+            <button type="button" class="watch" data-w="${x.letter}" ${session.state === 'replay' ? 'disabled' : ''}>${session.watching === x ? 'Speelt…' : '▶ Bekijk'}</button></li>`).join('')}
+        </ul>
+        ${session.watching && session.watching !== o ? `<p style="font-size:.92rem"><b>${RATE[session.watching.rate][0]}:</b> ${esc(session.watching.why)}</p>` : ''}
+      </section>
+      <button type="button" class="btn primary" id="nextBtn">${last ? 'Bekijk je score' : 'Volgende situatie'}</button>`;
+  }
+  panel.innerHTML = head + body;
+  panel.querySelectorAll('.opt[data-l]').forEach(b => b.onclick = () => choose(session.opts.find(o => o.letter === b.dataset.l)));
+  panel.querySelectorAll('[data-w]').forEach(b => b.onclick = () => watch(session.opts.find(o => o.letter === b.dataset.w)));
+  const stop = $('stopBtn'); if (stop) stop.onclick = toSetup;
+  const skip = $('skipBtn'); if (skip) skip.onclick = () => { runId++; session.state = 'done'; showEnd(); renderPlay(); };
+  const next = $('nextBtn'); if (next) next.onclick = () => {
+    runId++;
+    if (session.i < total - 1) { session.i++; loadScenario(); } else renderEnd();
   };
 }
-function valid(s) {
-  return s && FORMATIONS[s.size] && FORMATIONS[s.size][s.homeForm] && FORMATIONS[s.size][s.awayForm] &&
-    Array.isArray(s.players) && Array.isArray(s.arrows) && s.ball;
+function showEnd() {
+  /* simulatie overgeslagen: laat de eindsituatie van de gekozen optie direct zien */
+  const sc = session.list[session.i], o = session.chosen;
+  buildScene(sc); trailG.textContent = '';
+  o.steps.forEach(st => st.slice(1).forEach(a => {
+    if (a[0] === 'b') { trailG.appendChild(el('line', { class: 'tb', x1: ball.x, y1: ball.y, x2: M(a[1]), y2: a[2] })); ball.x = M(a[1]); ball.y = a[2]; return; }
+    let p, tx, ty;
+    if (a[0] === 'm') { p = players.find(q => q.me); tx = M(a[1]); ty = a[2]; }
+    else { p = nearest(a[0] === 't' ? 'us' : 'them', M(a[1]), a[2], true); tx = M(a[3]); ty = a[4]; }
+    if (!p) return;
+    if (!st.slice(1).some(q => q[0] === 'b') && Math.hypot(p.x - ball.x, p.y - ball.y) < 1.9) { ball.x += tx - p.x; ball.y += ty - p.y; }
+    p.x = tx; p.y = ty; p.dim = false;
+  }));
+  marksG.textContent = ''; drawPlayers();
+  cap.textContent = o.steps[o.steps.length - 1][0]; cap.hidden = false;
 }
-
-let state = read(KEY); if (!valid(state)) state = defaultState();
-let situations = read(SKEY); if (!Array.isArray(situations)) situations = [];
-let mode = 'move', arrowType = 'run', selected = null, action = null;
-
-const $ = id => document.getElementById(id);
-const svg = $('pitch'), playersG = $('players'), arrowsG = $('arrows');
-const save = () => store(KEY, state);
-
-// gras-banen
-(function () {
-  const g = $('grass');
-  for (let i = 0; i < 12; i++) {
-    const r = document.createElementNS(SVGNS, 'rect');
-    r.setAttribute('x', -3); r.setAttribute('width', 74);
-    r.setAttribute('y', -3 + i * 9.25); r.setAttribute('height', 9.26);
-    r.setAttribute('class', i % 2 ? 'grass-b' : 'grass-a');
-    g.appendChild(r);
-  }
-})();
-
-function el(tag, attrs, text) {
-  const n = document.createElementNS(SVGNS, tag);
-  for (const k in attrs) n.setAttribute(k, attrs[k]);
-  if (text != null) n.textContent = text;
-  return n;
+function renderEnd() {
+  const r = session.results, max = r.length * 2, pts = r.reduce((s, x) => s + RATE[x.rate][1], 0);
+  const pct = max ? Math.round(pts / max * 100) : 0;
+  const k = bestKey(); if (store.best[k] == null || pct > store.best[k]) { store.best[k] = pct; saveStore(); }
+  const c = { g: 0, r: 0, f: 0 }; r.forEach(x => c[x.rate]++);
+  const msg = pct >= 80 ? 'Topper! Jij leest het spel goed.' : pct >= 50 ? 'Goed bezig. Bekijk de uitleg bij je foute keuzes nog eens.' : 'Blijf oefenen. Kijk goed naar de simulaties van de goede keuzes.';
+  session.state = 'end';
+  runId++; cap.hidden = true; marksG.textContent = '';
+  panel.innerHTML = `
+    <section>
+      <h2>${esc(posNow())} · ${PHASES[cfg.phase][0]}</h2>
+      <div class="score"><span class="big">${pct}%</span><span class="muted">${pts} van ${max} punten</span></div>
+      <p>${msg}</p>
+    </section>
+    <div class="tally"><div class="g"><b>${c.g}</b><span>Goed</span></div><div class="r"><b>${c.r}</b><span>Redelijk</span></div><div class="f"><b>${c.f}</b><span>Fout</span></div></div>
+    <section>
+      <h2>Per situatie</h2>
+      <ul class="all">${r.map(x => `<li><span class="lbl">${PHASES[x.sc.ph][0]} · ${esc(x.sc.sub)}</span><span class="rate ${x.rate}">${RATE[x.rate][0]}</span></li>`).join('')}</ul>
+    </section>
+    <div class="btnrow"><button type="button" class="btn primary" id="againBtn">Opnieuw</button><button type="button" class="btn" id="setupBtn">Andere positie</button></div>`;
+  $('againBtn').onclick = startSession;
+  $('setupBtn').onclick = toSetup;
 }
+function toSetup() { runId++; session = null; drawSetupPitch(); renderSetup(); }
 
-function arrowPath(a) {
-  const dx = a.x2 - a.x1, dy = a.y2 - a.y1, L = Math.hypot(dx, dy);
-  if (a.type !== 'dribble' || L < 3) return `M${a.x1} ${a.y1} L${a.x2} ${a.y2}`;
-  const ux = dx / L, uy = dy / L, nx = -uy, ny = ux;
-  const tail = Math.min(2.5, L * 0.3), wl = L - tail;
-  const waves = Math.max(1, Math.round(wl / 3));
-  let d = `M${a.x1} ${a.y1}`;
-  for (let s = 0.4; s <= wl; s += 0.4) {
-    const off = 0.8 * Math.sin(2 * Math.PI * waves * s / wl);
-    d += ` L${(a.x1 + ux * s + nx * off).toFixed(2)} ${(a.y1 + uy * s + ny * off).toFixed(2)}`;
-  }
-  return d + ` L${a.x2} ${a.y2}`;
-}
-
-function renderArrows() {
-  arrowsG.textContent = '';
-  state.arrows.forEach(a => arrowsG.appendChild(el('path', { class: 'arrow ' + a.type, d: arrowPath(a), 'marker-end': `url(#ah-${a.type})` })));
-}
-
-function renderPlayers() {
-  playersG.textContent = '';
-  state.players.forEach(p => {
-    if (p.team === 'away' && !state.showAway) return;
-    const g = el('g', { class: `player ${p.team}${p.gk ? ' gk' : ''}${selected === p.id ? ' sel' : ''}`, 'data-id': p.id, transform: `translate(${p.x} ${p.y})` });
-    g.appendChild(el('circle', { class: 'hit', r: 3.6 }));
-    g.appendChild(el('circle', { class: 'ring', r: 3.5 }));
-    g.appendChild(el('circle', { class: 'disc', r: 2.6 }));
-    g.appendChild(el('text', { class: 'num', y: 0.95 }, p.num));
-    if (p.name) g.appendChild(el('text', { class: 'pname', y: 4.9 }, p.name));
-    playersG.appendChild(g);
-  });
-  const b = el('g', { class: 'ball', 'data-id': 'ball', transform: `translate(${state.ball.x} ${state.ball.y})` });
-  b.appendChild(el('circle', { r: 2.4, fill: 'transparent' }));
-  b.appendChild(el('circle', { class: 'b', r: 1.15 }));
-  b.appendChild(el('circle', { class: 'p', r: 0.42 }));
-  playersG.appendChild(b);
-}
-
-function fillSelect(sel, size, value) {
-  sel.textContent = '';
-  Object.keys(FORMATIONS[size]).forEach(f => { const o = document.createElement('option'); o.value = f; o.textContent = f; sel.appendChild(o); });
-  sel.value = value;
-}
-
-function renderControls() {
-  $('modeMove').setAttribute('aria-pressed', mode === 'move');
-  $('modeDraw').setAttribute('aria-pressed', mode === 'draw');
-  $('arrowTypes').hidden = mode !== 'draw';
-  document.querySelectorAll('#arrowTypes button').forEach(b => b.setAttribute('aria-pressed', b.dataset.type === arrowType));
-  document.querySelectorAll('[data-size]').forEach(b => b.setAttribute('aria-pressed', +b.dataset.size === state.size));
-  svg.classList.toggle('drawing', mode === 'draw');
-  $('hint').textContent = mode === 'draw'
-    ? 'Sleep over het veld om een pijl te tekenen.'
-    : 'Sleep spelers en de bal. Tik op een speler om een naam te geven.';
-  fillSelect($('homeForm'), state.size, state.homeForm);
-  fillSelect($('awayForm'), state.size, state.awayForm);
-  $('showAway').checked = state.showAway;
-  $('scoreHome').textContent = 'Wij ' + state.homeForm;
-  $('scoreAway').textContent = 'Tegenstander ' + state.awayForm;
-  $('scoreAwayWrap').hidden = $('scoreVs').hidden = !state.showAway;
-}
-
-function render() { renderArrows(); renderPlayers(); renderControls(); }
-
-// ---- slepen en tekenen ----
-function toSvg(e) {
-  const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
-}
-const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-
-svg.addEventListener('pointerdown', e => {
-  if (e.button > 0) return;
-  const p = toSvg(e);
-  if (mode === 'draw') {
-    const path = el('path', { class: 'arrow ' + arrowType, 'marker-end': `url(#ah-${arrowType})` });
-    arrowsG.appendChild(path);
-    action = { kind: 'draw', type: arrowType, x1: p.x, y1: p.y, x2: p.x, y2: p.y, path };
-    svg.setPointerCapture(e.pointerId); e.preventDefault(); return;
-  }
-  const t = e.target.closest('[data-id]');
-  if (!t) { if (selected) select(null); return; }
-  const id = t.dataset.id;
-  const obj = id === 'ball' ? state.ball : state.players.find(q => q.id === id);
-  if (!obj) return;
-  action = { kind: 'drag', id, obj, node: t, dx: p.x - obj.x, dy: p.y - obj.y, sx: p.x, sy: p.y, moved: false };
-  if (id !== 'ball') { const ball = playersG.querySelector('[data-id="ball"]'); playersG.insertBefore(t, ball); }
-  svg.setPointerCapture(e.pointerId); e.preventDefault();
-});
-
-svg.addEventListener('pointermove', e => {
-  if (!action) return;
-  const p = toSvg(e);
-  if (action.kind === 'draw') {
-    action.x2 = +clamp(p.x, -2, 70).toFixed(2); action.y2 = +clamp(p.y, -2, 107).toFixed(2);
-    action.path.setAttribute('d', arrowPath(action));
-    return;
-  }
-  if (Math.hypot(p.x - action.sx, p.y - action.sy) > 0.8) action.moved = true;
-  const nx = +clamp(p.x - action.dx, -1.5, 69.5).toFixed(2), ny = +clamp(p.y - action.dy, -1.5, 106.5).toFixed(2);
-  action.obj.x = nx; action.obj.y = ny;
-  action.node.setAttribute('transform', `translate(${nx} ${ny})`);
-});
-
-function endAction() {
-  if (!action) return;
-  const a = action; action = null;
-  if (a.kind === 'draw') {
-    if (Math.hypot(a.x2 - a.x1, a.y2 - a.y1) > 2.5) {
-      state.arrows.push({ type: a.type, x1: +a.x1.toFixed(2), y1: +a.y1.toFixed(2), x2: a.x2, y2: a.y2 });
-      save();
-    }
-    renderArrows();
-    return;
-  }
-  if (!a.moved && a.id !== 'ball') select(a.id);
-  else save();
-}
-svg.addEventListener('pointerup', endAction);
-svg.addEventListener('pointercancel', endAction);
-
-// ---- speler bewerken ----
-function select(id) {
-  selected = id;
-  const p = state.players.find(q => q.id === id);
-  $('editor').hidden = !p;
-  if (p) { $('edNum').value = p.num; $('edName').value = p.name; }
-  renderPlayers();
-}
-$('edNum').addEventListener('input', e => { const p = state.players.find(q => q.id === selected); if (p) { p.num = e.target.value.replace(/\D/g, '').slice(0, 2); e.target.value = p.num; renderPlayers(); save(); } });
-$('edName').addEventListener('input', e => { const p = state.players.find(q => q.id === selected); if (p) { p.name = e.target.value; renderPlayers(); save(); } });
-$('edName').addEventListener('keydown', e => { if (e.key === 'Enter') select(null); });
-$('edClose').addEventListener('click', () => select(null));
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && selected) select(null); });
-
-// ---- bediening ----
-$('modeMove').addEventListener('click', () => { mode = 'move'; renderControls(); });
-$('modeDraw').addEventListener('click', () => { mode = 'draw'; if (selected) select(null); renderControls(); });
-document.querySelectorAll('#arrowTypes button').forEach(b => b.addEventListener('click', () => { arrowType = b.dataset.type; renderControls(); }));
-
-function setFormation(team, form) {
-  state[team + 'Form'] = form;
-  const old = state.players.filter(p => p.team === team);
-  const fresh = makeTeam(team, state.size, form);
-  fresh.forEach((p, i) => { if (old[i]) p.name = old[i].name; });
-  const others = state.players.filter(p => p.team !== team);
-  state.players = team === 'home' ? fresh.concat(others) : others.concat(fresh);
-  selected = null; $('editor').hidden = true;
-  save(); render();
-}
-$('homeForm').addEventListener('change', e => setFormation('home', e.target.value));
-$('awayForm').addEventListener('change', e => setFormation('away', e.target.value));
-
-document.querySelectorAll('[data-size]').forEach(b => b.addEventListener('click', () => {
-  const n = +b.dataset.size; if (n === state.size) return;
-  const forms = Object.keys(FORMATIONS[n]);
-  const oldHome = state.players.filter(p => p.team === 'home'), oldAway = state.players.filter(p => p.team === 'away');
-  state.size = n; state.homeForm = forms[0]; state.awayForm = forms[1] || forms[0];
-  const h = makeTeam('home', n, state.homeForm), a = makeTeam('away', n, state.awayForm);
-  h.forEach((p, i) => { if (oldHome[i]) p.name = oldHome[i].name; });
-  a.forEach((p, i) => { if (oldAway[i]) p.name = oldAway[i].name; });
-  state.players = h.concat(a); state.arrows = []; state.ball = { x: 34, y: 52.5 };
-  selected = null; $('editor').hidden = true;
-  save(); render();
-}));
-
-$('showAway').addEventListener('change', e => { state.showAway = e.target.checked; save(); render(); });
-$('undo').addEventListener('click', () => { state.arrows.pop(); save(); renderArrows(); });
-$('clearArrows').addEventListener('click', () => { state.arrows = []; save(); renderArrows(); });
-$('resetPos').addEventListener('click', () => {
-  ['home', 'away'].forEach(team => {
-    const pos = makeTeam(team, state.size, state[team + 'Form']);
-    state.players.filter(p => p.team === team).forEach((p, i) => { if (pos[i]) { p.x = pos[i].x; p.y = pos[i].y; } });
-  });
-  state.ball = { x: 34, y: 52.5 };
-  save(); renderPlayers();
-});
-
-// ---- situaties opslaan ----
-let toastTimer;
-function toast(msg) { $('toast').textContent = msg; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').textContent = '', 2500); }
-function renderList() {
-  const ul = $('sitList'); ul.textContent = '';
-  if (!situations.length) {
-    const li = document.createElement('li');
-    li.innerHTML = '<p class="empty">Nog niets opgeslagen. Zet een spelsituatie neer, geef hem een naam en tik op Opslaan.</p>';
-    ul.appendChild(li); return;
-  }
-  situations.forEach((s, i) => {
-    const li = document.createElement('li');
-    const meta = document.createElement('div'); meta.className = 'meta';
-    const nm = document.createElement('div'); nm.className = 'nm'; nm.textContent = s.name;
-    const dt = document.createElement('div'); dt.className = 'dt';
-    dt.textContent = new Date(s.at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' }) + ' · ' + s.data.size + '-tal · ' + s.data.homeForm;
-    meta.append(nm, dt);
-    const load = document.createElement('button'); load.className = 'btn'; load.type = 'button'; load.textContent = 'Laden';
-    load.addEventListener('click', () => { state = clone(s.data); selected = null; $('editor').hidden = true; save(); render(); toast('"' + s.name + '" geladen'); });
-    const del = document.createElement('button'); del.className = 'btn danger'; del.type = 'button'; del.textContent = 'Wis';
-    del.addEventListener('click', () => {
-      if (del.dataset.armed) { situations.splice(i, 1); store(SKEY, situations); renderList(); toast('Verwijderd'); }
-      else { del.dataset.armed = '1'; del.textContent = 'Zeker?'; setTimeout(() => { if (del.isConnected) { delete del.dataset.armed; del.textContent = 'Wis'; } }, 3000); }
-    });
-    li.append(meta, load, del); ul.appendChild(li);
-  });
-}
-$('sitSave').addEventListener('click', () => {
-  const name = $('sitName').value.trim() || 'Situatie ' + (situations.length + 1);
-  situations.unshift({ name, at: Date.now(), data: clone(state) });
-  store(SKEY, situations); $('sitName').value = ''; renderList(); toast('"' + name + '" opgeslagen');
-});
-$('sitName').addEventListener('keydown', e => { if (e.key === 'Enter') $('sitSave').click(); });
-
-render(); renderList();
+toSetup();
 </script>
 
 </body>
